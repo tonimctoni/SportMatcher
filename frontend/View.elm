@@ -98,12 +98,19 @@ log_in model=
   , ("text-align", "center")
   ]]
   [ h1 [style [("text-align", "left")]] [text "Login"]
-  , if String.length model.error_string == 0 then div [] [] else h3 [] [text model.error_string]
+  , if String.length model.error_string == 0 then div [] [] else h5 [] [text model.error_string]
   , input [type_ "text", placeholder "Name", onInput SetNick] []
   , br [] []
   , input [type_ "password", placeholder "Password", onInput SetPass, onEnter LogIn] []
   , br [] []
   , button [onClick LogIn, style [("margin-top", ".5cm")]] [text "Ok"]
+  ]
+
+nav_fill: Model -> Html Msg
+nav_fill model =
+  div [class "container", style [("margin", ".2cm"), ("padding", ".2cm")]]
+  [ div [class "col-sm"] (List.map (\x -> div [class "row"] [button [class "btn", style [("margin", ".25cm")]] [text x]]) model.plugin_names)
+  , div [class "col-sm"] [text "qwe"]
   ]
 
 view: Model -> Html Msg
@@ -114,9 +121,10 @@ view model =
   , if model.logged_in then
       div []
       [ nav_bar model.nav_bar_state
+      , if String.length model.error_string == 0 then div [] [] else h5 [] [text model.error_string]
       , case model.nav_bar_state of
         NavReports -> text "asd"
-        NavFill -> text "qwe"
+        NavFill -> nav_fill model
         NavInvites -> text "zxc"
       ]
     else

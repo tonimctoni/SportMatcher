@@ -53,3 +53,13 @@ check_credentials model =
     return_bool_decoder = Decode.bool
   in
     Http.send CheckCredentialsReturn (Http.post "/check_credentials" (body) return_bool_decoder)
+
+get_plugin_names: Model -> Cmd Msg
+get_plugin_names model =
+  let
+    return_plugin_names_decoder: Decode.Decoder (List String)
+    return_plugin_names_decoder = 
+      Decode.list Decode.string
+  in
+    Http.send GetPluginNamesReturn (Http.get "/get_plugin_names" return_plugin_names_decoder)
+      

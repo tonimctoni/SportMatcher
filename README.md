@@ -19,3 +19,7 @@ Web application for finding common interests in sport.
  - Use a hash function designed to hash passwords.
 
  - When logging out, reset nav state.
+
+ - Since there is no session token, maybe cache recently used (nick+pass)->id. Maybe use queue to manage "recently used".
+
+ - Do not require credentials if not necesary (like for getting plugin names, or plugins themselves).

@@ -8998,17 +8998,27 @@ var _elm_lang$http$Http$StringPart = F2(
 		return {ctor: 'StringPart', _0: a, _1: b};
 	});
 var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
-var _user$project$Model$Model = F5(
-	function (a, b, c, d, e) {
-		return {logged_in: a, nav_bar_state: b, nick: c, pass: d, error_string: e};
+var _user$project$Model$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {logged_in: a, nav_bar_state: b, nick: c, pass: d, plugin_names: e, error_string: f};
 	});
 var _user$project$Model$NavInvites = {ctor: 'NavInvites'};
 var _user$project$Model$NavFill = {ctor: 'NavFill'};
 var _user$project$Model$NavReports = {ctor: 'NavReports'};
 var _user$project$Model$init = {
 	ctor: '_Tuple2',
-	_0: A5(_user$project$Model$Model, false, _user$project$Model$NavReports, '', '', ''),
+	_0: A6(
+		_user$project$Model$Model,
+		false,
+		_user$project$Model$NavReports,
+		'',
+		'',
+		{ctor: '[]'},
+		''),
 	_1: _elm_lang$core$Platform_Cmd$none
+};
+var _user$project$Model$GetPluginNamesReturn = function (a) {
+	return {ctor: 'GetPluginNamesReturn', _0: a};
 };
 var _user$project$Model$CheckCredentialsReturn = function (a) {
 	return {ctor: 'CheckCredentialsReturn', _0: a};
@@ -9023,6 +9033,13 @@ var _user$project$Model$LogOut = {ctor: 'LogOut'};
 var _user$project$Model$LogIn = {ctor: 'LogIn'};
 var _user$project$Model$SetNavBar = function (a) {
 	return {ctor: 'SetNavBar', _0: a};
+};
+var _user$project$Rest$get_plugin_names = function (model) {
+	var return_plugin_names_decoder = _elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string);
+	return A2(
+		_elm_lang$http$Http$send,
+		_user$project$Model$GetPluginNamesReturn,
+		A2(_elm_lang$http$Http$get, '/get_plugin_names', return_plugin_names_decoder));
 };
 var _user$project$Rest$check_credentials = function (model) {
 	var return_bool_decoder = _elm_lang$core$Json_Decode$bool;
@@ -9050,14 +9067,26 @@ var _user$project$Rest$check_credentials = function (model) {
 		_user$project$Model$CheckCredentialsReturn,
 		A3(_elm_lang$http$Http$post, '/check_credentials', body, return_bool_decoder));
 };
+var _user$project$Update$nav_bar_state_to_needed_cmd = F2(
+	function (model, new_nav_bar_state) {
+		var _p0 = new_nav_bar_state;
+		switch (_p0.ctor) {
+			case 'NavReports':
+				return _elm_lang$core$Platform_Cmd$none;
+			case 'NavFill':
+				return _user$project$Rest$get_plugin_names(model);
+			default:
+				return _elm_lang$core$Platform_Cmd$none;
+		}
+	});
 var _user$project$Update$http_err_to_string = function (err) {
-	var _p0 = err;
-	switch (_p0.ctor) {
+	var _p1 = err;
+	switch (_p1.ctor) {
 		case 'BadUrl':
 			return A2(
 				_elm_lang$core$Basics_ops['++'],
 				'BadUrl(',
-				A2(_elm_lang$core$Basics_ops['++'], _p0._0, ')'));
+				A2(_elm_lang$core$Basics_ops['++'], _p1._0, ')'));
 		case 'Timeout':
 			return 'Timeout';
 		case 'NetworkError':
@@ -9068,27 +9097,28 @@ var _user$project$Update$http_err_to_string = function (err) {
 			return A2(
 				_elm_lang$core$Basics_ops['++'],
 				'BadPayload(',
-				A2(_elm_lang$core$Basics_ops['++'], _p0._0, ')'));
+				A2(_elm_lang$core$Basics_ops['++'], _p1._0, ')'));
 	}
 };
 var _user$project$Update$update = F2(
 	function (msg, model) {
-		var _p1 = msg;
-		switch (_p1.ctor) {
+		var _p2 = msg;
+		switch (_p2.ctor) {
 			case 'SetNavBar':
+				var _p3 = _p2._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{nav_bar_state: _p1._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
+						{nav_bar_state: _p3, error_string: ''}),
+					_1: A2(_user$project$Update$nav_bar_state_to_needed_cmd, model, _p3)
 				};
 			case 'SetNick':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{nick: _p1._0}),
+						{nick: _p2._0, error_string: ''}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SetPass':
@@ -9096,7 +9126,7 @@ var _user$project$Update$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{pass: _p1._0}),
+						{pass: _p2._0, error_string: ''}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'LogIn':
@@ -9113,11 +9143,11 @@ var _user$project$Update$update = F2(
 						{nick: '', pass: '', logged_in: false}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
-				if (_p1._0.ctor === 'Ok') {
+			case 'CheckCredentialsReturn':
+				if (_p2._0.ctor === 'Ok') {
 					return {
 						ctor: '_Tuple2',
-						_0: _p1._0._0 ? _elm_lang$core$Native_Utils.update(
+						_0: _p2._0._0 ? _elm_lang$core$Native_Utils.update(
 							model,
 							{logged_in: true, error_string: ''}) : _elm_lang$core$Native_Utils.update(
 							model,
@@ -9133,13 +9163,121 @@ var _user$project$Update$update = F2(
 								error_string: A2(
 									_elm_lang$core$Basics_ops['++'],
 									'CheckCredentialsReturn Error: ',
-									_user$project$Update$http_err_to_string(_p1._0._0))
+									_user$project$Update$http_err_to_string(_p2._0._0))
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			default:
+				if (_p2._0.ctor === 'Ok') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{plugin_names: _p2._0._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								error_string: A2(
+									_elm_lang$core$Basics_ops['++'],
+									'GetPluginNamesReturn Error: ',
+									_user$project$Update$http_err_to_string(_p2._0._0))
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 		}
 	});
+var _user$project$View$nav_fill = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('container'),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'margin', _1: '.2cm'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'padding', _1: '.2cm'},
+							_1: {ctor: '[]'}
+						}
+					}),
+				_1: {ctor: '[]'}
+			}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$div,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$class('col-sm'),
+					_1: {ctor: '[]'}
+				},
+				A2(
+					_elm_lang$core$List$map,
+					function (x) {
+						return A2(
+							_elm_lang$html$Html$div,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('row'),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$button,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$class('btn'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$style(
+												{
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'margin', _1: '.25cm'},
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text(x),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							});
+					},
+					model.plugin_names)),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('col-sm'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('qwe'),
+						_1: {ctor: '[]'}
+					}),
+				_1: {ctor: '[]'}
+			}
+		});
+};
 var _user$project$View$nav_bar = function (nav_bar_state) {
 	return A2(
 		_elm_lang$html$Html$nav,
@@ -9445,7 +9583,7 @@ var _user$project$View$log_in = function (model) {
 					_elm_lang$html$Html$div,
 					{ctor: '[]'},
 					{ctor: '[]'}) : A2(
-					_elm_lang$html$Html$h3,
+					_elm_lang$html$Html$h5,
 					{ctor: '[]'},
 					{
 						ctor: '::',
@@ -9580,18 +9718,34 @@ var _user$project$View$view = function (model) {
 							_0: _user$project$View$nav_bar(model.nav_bar_state),
 							_1: {
 								ctor: '::',
-								_0: function () {
-									var _p0 = model.nav_bar_state;
-									switch (_p0.ctor) {
-										case 'NavReports':
-											return _elm_lang$html$Html$text('asd');
-										case 'NavFill':
-											return _elm_lang$html$Html$text('qwe');
-										default:
-											return _elm_lang$html$Html$text('zxc');
-									}
-								}(),
-								_1: {ctor: '[]'}
+								_0: _elm_lang$core$Native_Utils.eq(
+									_elm_lang$core$String$length(model.error_string),
+									0) ? A2(
+									_elm_lang$html$Html$div,
+									{ctor: '[]'},
+									{ctor: '[]'}) : A2(
+									_elm_lang$html$Html$h5,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text(model.error_string),
+										_1: {ctor: '[]'}
+									}),
+								_1: {
+									ctor: '::',
+									_0: function () {
+										var _p0 = model.nav_bar_state;
+										switch (_p0.ctor) {
+											case 'NavReports':
+												return _elm_lang$html$Html$text('asd');
+											case 'NavFill':
+												return _user$project$View$nav_fill(model);
+											default:
+												return _elm_lang$html$Html$text('zxc');
+										}
+									}(),
+									_1: {ctor: '[]'}
+								}
 							}
 						}) : _user$project$View$log_in(model),
 					_1: {ctor: '[]'}
