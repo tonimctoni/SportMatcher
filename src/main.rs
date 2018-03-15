@@ -11,15 +11,15 @@ extern crate rusqlite;
 extern crate sha2;
 extern crate rand;
 
-// use std::io;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use rocket::response::NamedFile;
 // use rocket::http::RawStr;
-use rocket::State;
+// use rocket::State;
 // use rocket_contrib::{Json};
-use rocket::response::Redirect;
-use rocket::request::Form;
+// use rocket::response::Redirect;
+// use rocket::request::Form;
 
 use sha2::{Sha512, Digest};
 use rand::Rng;
@@ -77,31 +77,8 @@ fn init_db(toni_s_password: &str) {
 }
 
 #[get("/")]
-fn index() -> Redirect {
-    Redirect::found("/login.html")
-}
-
-#[derive(FromForm)]
-struct PostLogin {
-    nick: String,
-    pass: String
-}
-
-#[post("/login", data = "<post_login>")]
-fn post_login(conn: State<Mutex<rusqlite::Connection>>, post_login: Form<PostLogin>) -> Redirect {
-    let post_login: PostLogin = post_login.into_inner();
-    match conn.lock() {
-        Ok(conn) => {
-            conn.query_row("SELECT * FROM Users WHERE Nick='?'", &[&post_login.nick], |row| {
-                let a:isize=row.get(0);
-                println!("{:?}", a);
-                    // , row.get_checked(1), row.get_checked(2), row.get_checked(3)
-                });
-            Redirect::found("/login.html")
-        },
-        Err(e) => Redirect::temporary("/internal_error.html"),
-    }
-    // Redirect::found("/login.html")
+fn index() -> io::Result<NamedFile> {
+    NamedFile::open("frontend/index.html")
 }
 
 #[get("/<file..>")]
@@ -109,10 +86,11 @@ fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("resources/").join(file)).ok()
 }
 
+// conn: State<Mutex<rusqlite::Connection>>
 fn main() {
     let conn=rusqlite::Connection::open("database.sqlite").expect("ERROR: Could not open database");
     rocket::ignite()
     .manage(Mutex::new(conn))
-    .mount("/", routes![index, files, post_login])
+    .mount("/", routes![index, files])
     .launch();
 }

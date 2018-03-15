@@ -1,3 +1,5 @@
 target
 Cargo.lock
 database.sqlite
+frontend/elm-stuff
+frontend/elm-package.json
