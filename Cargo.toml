@@ -1,7 +1,9 @@
 [package]
-name = "SportMatcher"
+name = "sport_matcher"
 version = "0.1.0"
 authors = ["A.bozzanoschwedhel"]
 
 [dependencies]
 rusqlite = "*"
+sha2 = "*"
+rand = "*"
