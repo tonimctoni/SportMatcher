@@ -51,5 +51,6 @@ update msg model =
     SetNick nick -> ({model | nick=nick}, Cmd.none)
     SetPass pass -> ({model | pass=pass}, Cmd.none)
     LogIn -> (model, check_credentials model)
+    LogOut -> ({model | nick="", pass="", logged_in=False}, Cmd.none)
     CheckCredentialsReturn (Ok ok) -> (if ok then {model | logged_in=True, error_string=""} else {model | logged_in=False, error_string="Erroneous credentials"}, Cmd.none)
     CheckCredentialsReturn (Err err) -> ({model | error_string="CheckCredentialsReturn Error: "++(http_err_to_string err)}, Cmd.none)

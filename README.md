@@ -13,3 +13,9 @@ Web application for finding common interests in sport.
  - Use get_checked instead of get for sqlite operations.
 
  - Add some backend error handling (mostly just logging).
+
+ - Sanitize everything comming from the client.
+
+ - Use a hash function designed to hash passwords.
+
+ - When logging out, reset nav state.

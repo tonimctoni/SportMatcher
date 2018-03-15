@@ -1,0 +1,16 @@
+Futball
+Basketball
+Handball
+Golf
+Running
+Swimming
+Volleyball
+Boxing
+Archery
+Climbing
+Cycling
+Fencing
+Hockey
+Surfing
+Tennis
+Wrestling

@@ -1,0 +1,10 @@
+Sushi
+Pizza
+Burgers
+Chinese
+Vietnamese
+Indian
+Mexican
+Italian
+Steak
+Ice cream

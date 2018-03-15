@@ -76,27 +76,41 @@ nav_bar nav_bar_state =
       , li (if nav_bar_state==NavInvites then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavInvites)] [text "Invite"]]
       ]
     , ul [class "nav navbar-nav navbar-right"]
-      [ li [] [a [href "/unlogin"] [span [class "glyphicon glyphicon-log-out"] [], text " Unlogin"]]
+      [ li [] [a [href "javascript:;", onClick LogOut] [span [class "glyphicon glyphicon-log-out"] [], text " Unlogin"]]
       ]
     ]
   ]
-
+--, ("padding", ".75cm")
 log_in: Model -> Html Msg
 log_in model=
-  div []
-  [ h1 [] [text "Login"]
+  div [style 
+  [ ("position", "fixed")
+  , ("top", "50%")
+  , ("left", "50%")
+  , ("transform", "translate(-50%, -50%)")
+  , ("background-color", "black")
+  , ("border-color", "#444444")
+  , ("border-style", "solid")
+  , ("border-width", "medium")
+  , ("padding-left", ".75cm")
+  , ("padding-right", ".75cm")
+  , ("padding-bottom", ".75cm")
+  , ("text-align", "center")
+  ]]
+  [ h1 [style [("text-align", "left")]] [text "Login"]
   , if String.length model.error_string == 0 then div [] [] else h3 [] [text model.error_string]
   , input [type_ "text", placeholder "Name", onInput SetNick] []
   , br [] []
   , input [type_ "password", placeholder "Password", onInput SetPass, onEnter LogIn] []
   , br [] []
-  , button [onClick LogIn] [text "Ok"]
+  , button [onClick LogIn, style [("margin-top", ".5cm")]] [text "Ok"]
   ]
 
 view: Model -> Html Msg
 view model =
   div []
   [node "link" [ rel "stylesheet", href "/bootstrap/css/bootstrap.min.css"] []
+  , node "style" [type_ "text/css"] [text "body{background-image: url('/darkness640.jpg');}"]
   , if model.logged_in then
       div []
       [ nav_bar model.nav_bar_state

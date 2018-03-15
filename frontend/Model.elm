@@ -46,6 +46,7 @@ type NavBarState
 type Msg
   = SetNavBar NavBarState
   | LogIn
+  | LogOut
   | SetNick String
   | SetPass String
   | CheckCredentialsReturn (Result Http.Error Bool)
