@@ -81,10 +81,11 @@ nav_bar nav_bar_state =
     ]
   ]
 
-log_in: Html Msg
-log_in =
+log_in: Model -> Html Msg
+log_in model=
   div []
   [ h1 [] [text "Login"]
+  , if String.length model.error_string == 0 then div [] [] else h3 [] [text model.error_string]
   , input [type_ "text", placeholder "Name", onInput SetNick] []
   , br [] []
   , input [type_ "password", placeholder "Password", onInput SetPass, onEnter LogIn] []
@@ -105,5 +106,5 @@ view model =
         NavInvites -> text "zxc"
       ]
     else
-      log_in
+      log_in model
   ]

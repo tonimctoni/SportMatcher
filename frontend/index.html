@@ -9348,61 +9348,49 @@ var _user$project$View$onEnter = function (msg) {
 		'keydown',
 		A2(_elm_lang$core$Json_Decode$andThen, isEnter, _elm_lang$html$Html_Events$keyCode));
 };
-var _user$project$View$log_in = A2(
-	_elm_lang$html$Html$div,
-	{ctor: '[]'},
-	{
-		ctor: '::',
-		_0: A2(
-			_elm_lang$html$Html$h1,
-			{ctor: '[]'},
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text('Login'),
-				_1: {ctor: '[]'}
-			}),
-		_1: {
+var _user$project$View$log_in = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$input,
+				_elm_lang$html$Html$h1,
+				{ctor: '[]'},
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$type_('text'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$placeholder('Name'),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$SetNick),
-							_1: {ctor: '[]'}
-						}
-					}
-				},
-				{ctor: '[]'}),
+					_0: _elm_lang$html$Html$text('Login'),
+					_1: {ctor: '[]'}
+				}),
 			_1: {
 				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$br,
+				_0: _elm_lang$core$Native_Utils.eq(
+					_elm_lang$core$String$length(model.error_string),
+					0) ? A2(
+					_elm_lang$html$Html$div,
 					{ctor: '[]'},
-					{ctor: '[]'}),
+					{ctor: '[]'}) : A2(
+					_elm_lang$html$Html$h3,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text(model.error_string),
+						_1: {ctor: '[]'}
+					}),
 				_1: {
 					ctor: '::',
 					_0: A2(
 						_elm_lang$html$Html$input,
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$type_('password'),
+							_0: _elm_lang$html$Html_Attributes$type_('text'),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$placeholder('Password'),
+								_0: _elm_lang$html$Html_Attributes$placeholder('Name'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$SetPass),
-									_1: {
-										ctor: '::',
-										_0: _user$project$View$onEnter(_user$project$Model$LogIn),
-										_1: {ctor: '[]'}
-									}
+									_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$SetNick),
+									_1: {ctor: '[]'}
 								}
 							}
 						},
@@ -9416,24 +9404,54 @@ var _user$project$View$log_in = A2(
 						_1: {
 							ctor: '::',
 							_0: A2(
-								_elm_lang$html$Html$button,
+								_elm_lang$html$Html$input,
 								{
 									ctor: '::',
-									_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$LogIn),
-									_1: {ctor: '[]'}
+									_0: _elm_lang$html$Html_Attributes$type_('password'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$placeholder('Password'),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$SetPass),
+											_1: {
+												ctor: '::',
+												_0: _user$project$View$onEnter(_user$project$Model$LogIn),
+												_1: {ctor: '[]'}
+											}
+										}
+									}
 								},
-								{
+								{ctor: '[]'}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$br,
+									{ctor: '[]'},
+									{ctor: '[]'}),
+								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html$text('Ok'),
+									_0: A2(
+										_elm_lang$html$Html$button,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$LogIn),
+											_1: {ctor: '[]'}
+										},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text('Ok'),
+											_1: {ctor: '[]'}
+										}),
 									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
+								}
+							}
 						}
 					}
 				}
 			}
-		}
-	});
+		});
+};
 var _user$project$View$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -9476,7 +9494,7 @@ var _user$project$View$view = function (model) {
 							}(),
 							_1: {ctor: '[]'}
 						}
-					}) : _user$project$View$log_in,
+					}) : _user$project$View$log_in(model),
 				_1: {ctor: '[]'}
 			}
 		});
