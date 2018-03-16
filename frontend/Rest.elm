@@ -4,7 +4,7 @@ import Model exposing (..)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
-----elm-package install elm-lang/http
+--elm-package install elm-lang/http
 
 --send_message: Model -> Cmd Msg
 --send_message model =
@@ -54,12 +54,24 @@ check_credentials model =
   in
     Http.send CheckCredentialsReturn (Http.post "/check_credentials" (body) return_bool_decoder)
 
-get_plugin_names: Model -> Cmd Msg
-get_plugin_names model =
+get_plugin_names: Cmd Msg
+get_plugin_names =
   let
     return_plugin_names_decoder: Decode.Decoder (List String)
     return_plugin_names_decoder = 
       Decode.list Decode.string
   in
     Http.send GetPluginNamesReturn (Http.get "/get_plugin_names" return_plugin_names_decoder)
-      
+
+get_plugin_filling: String -> Cmd Msg
+get_plugin_filling selected_plugin =
+  let
+    body =
+      selected_plugin
+      |> Encode.string
+      |> Http.jsonBody
+
+    return_plugin_filling_decoder: Decode.Decoder (List String)
+    return_plugin_filling_decoder = Decode.list Decode.string
+  in
+    Http.send GetPluginFillingReturn (Http.post "/get_plugin_filling" (body) return_plugin_filling_decoder)

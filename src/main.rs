@@ -14,8 +14,10 @@ extern crate rand;
 mod salter_hasher;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::fs::File;
 use std::sync::Mutex;
 use rocket::response::NamedFile;
+use std::io::prelude::*;
 // use rocket::http::RawStr;
 use rocket::State;
 use rocket_contrib::Json;
@@ -38,7 +40,7 @@ fn init_db() {
     conn.execute("DROP TABLE IF EXISTS Reports", &[]).unwrap();
 
     conn.execute("CREATE TABLE Users(Id INT UNIQUE, Nick TEXT UNIQUE, PassHash TEXT, Salt TEXT)", &[]).unwrap();
-    conn.execute("CREATE TABLE Plugins(Id INT UNIQUE, Name TEXT UNIQUE, Filename TEXT)", &[]).unwrap();
+    conn.execute("CREATE TABLE Plugins(Id INT UNIQUE, Name TEXT UNIQUE, Filling TEXT)", &[]).unwrap();
     conn.execute("CREATE TABLE Fills(UserId INT, PluginId INT, Responses TEXT)", &[]).unwrap();
     conn.execute("CREATE TABLE Invites(FromUserId INT, ToUserId INT, PluginId INT)", &[]).unwrap();
     conn.execute("CREATE TABLE Reports(UserId INT, OtherUserId TEXT, PluginId INT, Report TEXT)", &[]).unwrap();
@@ -47,9 +49,17 @@ fn init_db() {
     let (s,h)=sh.salt_and_hash("password");
     conn.execute("INSERT INTO Users VALUES(?, ?, ?, ?)", &[&1, &"toni", &h, &s]).unwrap();
 
-    conn.execute("INSERT INTO Plugins VALUES(2, \"Sports\", \"sports.txt\")", &[]).unwrap();
-    conn.execute("INSERT INTO Plugins VALUES(3, \"Foods\", \"foods.txt\")", &[]).unwrap();
-    conn.execute("INSERT INTO Plugins VALUES(4, \"Stuff\", \"stuff.txt\")", &[]).unwrap();
+
+    fn get_dollar_separated_file_content(filepath: &str) -> String{
+        let mut f = File::open(filepath).unwrap();
+        let mut content=String::new();
+        f.read_to_string(&mut content).unwrap();
+        content.lines().map(|l| l.into()).collect::<Vec<String>>().join("$")
+    }
+
+    conn.execute("INSERT INTO Plugins VALUES(2, \"Sports\", ?)", &[&get_dollar_separated_file_content("plugins/sports.txt")]).unwrap();
+    conn.execute("INSERT INTO Plugins VALUES(3, \"Foods\", ?)", &[&get_dollar_separated_file_content("plugins/foods.txt")]).unwrap();
+    conn.execute("INSERT INTO Plugins VALUES(4, \"Stuff\", ?)", &[&get_dollar_separated_file_content("plugins/stuff.txt")]).unwrap();
 }
 
 fn get_user_id_if_credentials_are_ok(conn: &Mutex<rusqlite::Connection>, nick: &str, pass: &str) -> Option<isize>{
@@ -110,7 +120,7 @@ fn get_plugin_names_from_db(conn: &Mutex<rusqlite::Connection>) -> Vec<String>{
     match conn.lock() {
         Err(_) => Vec::new(),
         Ok(conn) =>{
-            match conn.prepare("SELECT Name FROM Plugins"){
+            match conn.prepare("SELECT Name FROM Plugins ORDER BY Name"){
                 Err(_) => Vec::new(),
                 Ok(mut stmt) => {
                     match stmt.query_map(&[], |row| {row.get(0)}) {
@@ -120,6 +130,23 @@ fn get_plugin_names_from_db(conn: &Mutex<rusqlite::Connection>) -> Vec<String>{
                         },
                     }
                 },
+            }
+        },
+    }
+}
+
+fn get_plugin_filling_from_db(conn: &Mutex<rusqlite::Connection>, name: &str) -> Vec<String>{
+    match conn.lock() {
+        Err(_) => Vec::new(),
+        Ok(conn) =>{
+            struct AString(String);
+            match conn.query_row("SELECT Filling FROM Plugins WHERE Name=?", &[&name], |row| AString(row.get(0))){
+                Err(_) => Vec::new(),
+                Ok(AString(filling)) => {
+                    let mut filling=filling.split("$").map(|x| x.into()).collect::<Vec<String>>();
+                    filling.sort_unstable();
+                    filling
+                }
             }
         },
     }
@@ -153,11 +180,17 @@ fn get_plugin_names(conn: State<Mutex<rusqlite::Connection>>) ->Json<Vec<String>
     Json(get_plugin_names_from_db(&conn))
 }
 
+#[post("/get_plugin_filling", format = "application/json", data = "<plugin_name>")]
+fn get_plugin_filling(conn: State<Mutex<rusqlite::Connection>>, plugin_name: Json<String>) -> Json<Vec<String>>{
+    let plugin_name = plugin_name.into_inner();
+    Json(get_plugin_filling_from_db(&conn, plugin_name.as_str()))
+}
+
 fn main() {
     init_db();
     let conn=rusqlite::Connection::open("database.sqlite").expect("ERROR: Could not open database");
     rocket::ignite()
     .manage(Mutex::new(conn))
-    .mount("/", routes![index, files, check_credentials, get_plugin_names])
+    .mount("/", routes![index, files, check_credentials, get_plugin_names, get_plugin_filling])
     .launch();
 }

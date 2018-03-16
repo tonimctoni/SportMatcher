@@ -106,11 +106,28 @@ log_in model=
   , button [onClick LogIn, style [("margin-top", ".5cm")]] [text "Ok"]
   ]
 
+plugin_buttons: Model -> Html Msg
+plugin_buttons model =
+  div
+    [class "col-md-2", style [("text-align", "center"), ("margin", ".1cm")]]
+    (List.map (\x -> div [] [button [class "btn", style [("margin", ".25cm"), ("width", "3cm")], onClick (SelectPlugin x)] [text x]]) model.plugin_names)
+
+plugin_filling : Model -> Html Msg
+plugin_filling model =
+  case model.selected_plugin of
+    Nothing -> div [] []
+    Just selected_plugin -> div [class "col-md-4", style [("border-left", ".075cm dashed #555555")]]
+      [ div [] []
+      , div [] (List.map (\x -> h2 [class "text-primary"] [text x]) model.plugin_filling)
+      ]
+
 nav_fill: Model -> Html Msg
 nav_fill model =
   div [class "container", style [("margin", ".2cm"), ("padding", ".2cm")]]
-  [ div [class "col-sm"] (List.map (\x -> div [class "row"] [button [class "btn", style [("margin", ".25cm")]] [text x]]) model.plugin_names)
-  , div [class "col-sm"] [text "qwe"]
+  [ div [class "row"]
+    [ plugin_buttons model
+    , plugin_filling model
+    ]
   ]
 
 view: Model -> Html Msg

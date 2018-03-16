@@ -20,6 +20,14 @@ Web application for finding common interests in sport.
 
  - When logging out, reset nav state.
 
- - Since there is no session token, maybe cache recently used (nick+pass)->id. Maybe use queue to manage "recently used".
+ - Since there is no session token, maybe cache recently used `(nick+pass)->id`. Maybe use queue to manage "recently used".
 
  - Do not require credentials if not necesary (like for getting plugin names, or plugins themselves).
+
+ - Rethink when data should be sent to the client (that is, when the client should request it).
+
+ - On credentialized requests return Options, such that wrong credentials yield `None` from server.
+
+ - Backend is inefficient: String allocations everywhere. Maybe try to mend this. Maybe use `RawStr` where possible.
+
+ - Possible pitfall: Filling may some times (and some times not) be sorted.

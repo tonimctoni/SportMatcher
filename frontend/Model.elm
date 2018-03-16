@@ -51,6 +51,8 @@ type Msg
   | SetPass String
   | CheckCredentialsReturn (Result Http.Error Bool)
   | GetPluginNamesReturn (Result Http.Error (List String))
+  | SelectPlugin String
+  | GetPluginFillingReturn (Result Http.Error (List String))
 
 type alias Model =
   { logged_in: Bool
@@ -58,8 +60,11 @@ type alias Model =
   , nick: String
   , pass: String
   , plugin_names: List String
+  , selected_plugin: Maybe String
+  , plugin_filling: List String
   , error_string: String
   }
 
 init: (Model, Cmd Msg)
-init = (Model False NavReports "" "" [] "", Cmd.none)
+--init = (Model False NavReports "" "" [] "", Cmd.none)
+init = (Model True NavFill "" "" [] Nothing [] "", Cmd.none)

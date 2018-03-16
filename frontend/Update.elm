@@ -44,22 +44,25 @@ http_err_to_string err =
 --    GetMessagesReturn (Ok incomming_messages) -> (handle_incomming_messages model incomming_messages, Cmd.none)
 --    GetMessagesReturn (Err err) -> ({model | status_string="GetMessages Error: "++(http_err_to_string err)}, Cmd.none)
 
-nav_bar_state_to_needed_cmd: Model -> NavBarState -> Cmd Msg
-nav_bar_state_to_needed_cmd model new_nav_bar_state =
+nav_bar_state_to_needed_cmd: NavBarState -> Cmd Msg
+nav_bar_state_to_needed_cmd new_nav_bar_state =
   case new_nav_bar_state of
     NavReports -> Cmd.none
-    NavFill -> get_plugin_names model
+    NavFill -> get_plugin_names
     NavInvites -> Cmd.none
 
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    SetNavBar nav_bar_state -> ({model | nav_bar_state=nav_bar_state, error_string=""}, nav_bar_state_to_needed_cmd model nav_bar_state) -- maybe load fresh data here
+    SetNavBar nav_bar_state -> ({model | nav_bar_state=nav_bar_state, error_string=""}, nav_bar_state_to_needed_cmd nav_bar_state) -- maybe load fresh data here
     SetNick nick -> ({model | nick=nick, error_string=""}, Cmd.none)
     SetPass pass -> ({model | pass=pass, error_string=""}, Cmd.none)
     LogIn -> (model, check_credentials model)
-    LogOut -> ({model | nick="", pass="", logged_in=False}, Cmd.none)
+    LogOut -> ({model | nick="", pass="", error_string="" , logged_in=False}, Cmd.none)
     CheckCredentialsReturn (Ok ok) -> (if ok then {model | logged_in=True, error_string=""} else {model | logged_in=False, error_string="Erroneous credentials"}, Cmd.none)
     CheckCredentialsReturn (Err err) -> ({model | error_string="CheckCredentialsReturn Error: "++(http_err_to_string err)}, Cmd.none)
     GetPluginNamesReturn (Ok plugin_name_list) -> ({model | plugin_names=plugin_name_list}, Cmd.none)
     GetPluginNamesReturn (Err err) -> ({model | error_string="GetPluginNamesReturn Error: "++(http_err_to_string err)}, Cmd.none)
+    SelectPlugin name -> ({model | selected_plugin=Just name}, get_plugin_filling name)
+    GetPluginFillingReturn (Ok plugin_filling) -> ({model | plugin_filling=plugin_filling}, Cmd.none)
+    GetPluginFillingReturn (Err err) -> ({model | error_string="GetPluginFillingReturn Error: "++(http_err_to_string err)}, Cmd.none)
