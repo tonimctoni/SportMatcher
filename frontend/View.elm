@@ -118,7 +118,7 @@ plugin_filling model =
     Nothing -> div [] []
     Just selected_plugin -> div [class "col-md-4", style [("border-left", ".075cm dashed #555555")]]
       [ div [] []
-      , div [] (List.map (\x -> h2 [class "text-primary"] [text x]) model.plugin_filling)
+      , div [] (List.map (\x -> h2 [class "text-info"] [text x]) model.plugin_filling)
       ]
 
 nav_fill: Model -> Html Msg
