@@ -104,7 +104,6 @@ fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<Re
             if polls.contains_key(&name){
                 Json("A poll with that name already exists.")
             } else {
-                
                 let poll=Poll{number: number, title: title, questions: questions, answers: vec![]};
                 polls.insert(name, poll);
                 Json("success")
@@ -154,6 +153,123 @@ fn get_poll(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<String>) -> J
             Some(poll) => Json(Some(PollTitleAndQuestions{title: poll.title.clone(), questions: poll.questions.clone()})),
         },
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct PollResponse {
+    user_name: String,
+    poll_name: String,
+    answers: Vec<isize>,
+}
+
+#[post("/fill_poll", format = "application/json", data = "<poll_response>")]
+fn fill_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<PollResponse>) -> Json<&str>{
+    let mut poll_response=poll_response.into_inner();
+    poll_response.user_name.make_ascii_lowercase();
+    poll_response.poll_name.make_ascii_lowercase();
+    let PollResponse{user_name, poll_name, answers}=poll_response;
+
+    if user_name.len() < 3 || user_name.len() > 32 || !contains_only(user_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
+        return Json("User name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+    }
+
+    if poll_name.len() < 3 || poll_name.len() > 32 || !contains_only(poll_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
+        return Json("Poll name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+    }
+
+    match polls.lock() {
+        Err(_) => Json("Server error."),
+        Ok(mut polls) => match polls.get_mut(&poll_name) {
+            None => Json("A poll with that name does not exists."),
+            Some(mut poll) => {
+                if poll.answers.iter().any(|a| (*a).0==user_name){
+                    Json("A user with that name has already answered the poll.")
+                } else if poll.questions.len()!=answers.len(){
+                    Json("The number of poll questions and answers is different.")
+                } else {
+                    let answers=answers.into_iter().map(|a| if a==2 {"y".to_string()} else if a==1 {"o".to_string()} else {"n".to_string()}).collect::<Vec<String>>();
+                    poll.answers.push((user_name, answers));
+                    Json("success")
+                }
+            },
+        },
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct FreeEntryPollResponse {
+    user_name: String,
+    poll_name: String,
+    answers: String,
+}
+
+#[post("/fill_free_entry_poll", format = "application/json", data = "<poll_response>")]
+fn fill_free_entry_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<FreeEntryPollResponse>) -> Json<&str>{
+    let mut poll_response=poll_response.into_inner();
+    poll_response.user_name.make_ascii_lowercase();
+    poll_response.poll_name.make_ascii_lowercase();
+    let FreeEntryPollResponse{user_name, poll_name, answers}=poll_response;
+    let answers=answers
+    .lines()
+    .map(|l| {
+        let mut l=l.to_string();
+        l.make_ascii_lowercase();
+        l
+    })
+    .collect::<Vec<String>>();
+
+    if user_name.len() < 3 || user_name.len() > 32 || !contains_only(user_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
+        return Json("User name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+    }
+
+    if poll_name.len() < 3 || poll_name.len() > 32 || !contains_only(poll_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
+        return Json("Poll name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+    }
+
+    if answers.len() < 2 || answers.len() > 1000{
+        return Json("There must be between 2 and 1000 answers.")
+    }
+
+    if answers.iter().any(|a| (*a).len() < 3 || (*a).len() > 32 || !contains_only((*a).as_str(), LOWER_ALPHA_SPACE_CHARS)){
+        return Json("The length of each answer must be between 3 and 32, and only contain letters and spaces.")
+    }
+
+    match polls.lock() {
+        Err(_) => Json("Server error."),
+        Ok(mut polls) => match polls.get_mut(&poll_name) {
+            None => Json("A poll with that name does not exists."),
+            Some(mut poll) => {
+                if poll.answers.iter().any(|a| (*a).0==user_name){
+                    Json("A user with that name has already answered the poll.")
+                } else if poll.questions.len()!=answers.len(){
+                    Json("The number of poll questions and answers is different.")
+                } else {
+                    poll.answers.push((user_name, answers));
+                    Json("success")
+                }
+            },
+        },
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct PollResult {
+    poll_name: String,
+    user_names: Vec<String>,
+    all_yay: Vec<String>,
+    some_yay_others_open: Vec<String>,
+    error_string: String,
+}
+
+#[post("/get_poll_results", format = "application/json", data = "<name>")]
+fn get_poll_results(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<String>) -> Json<PollResult>{
+    // let mut name=name.into_inner();
+    // name.make_ascii_lowercase();
+    // match polls.lock() {
+    //     Err(_) => Json(true),
+    //     Ok(polls) => Json(polls.contains_key(&name)),
+    // }
+    Json(PollResult{poll_name: "".into(), user_names: vec![], all_yay: vec![], some_yay_others_open: vec![], error_string: "".into()})
 }
 
 fn main() {

@@ -11,6 +11,8 @@ Web application for finding common interests in sport.
 
  - Internally, all text is lower case.
 
+ - When reporting results, show nothing for empty vector.
+
 # Frontend Design
 
     - Navbar has 4 options:
