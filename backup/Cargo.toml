@@ -1,0 +1,14 @@
+[package]
+name = "sport_matcher"
+version = "0.1.0"
+authors = ["A.bozzanoschwedhel"]
+
+[dependencies]
+rusqlite = "*"
+sha2 = "*"
+rand = "*"
+rocket = "0.3"
+rocket_codegen = "0.3"
+rocket_contrib = "0.3"
+serde_derive = "*"
+serde = "*"

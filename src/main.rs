@@ -6,150 +6,32 @@ extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
-
-extern crate rusqlite;
-extern crate sha2;
-extern crate rand;
-
-mod salter_hasher;
+use std::collections::HashMap;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::fs::File;
+// use std::fs::File;
 use std::sync::Mutex;
 use rocket::response::NamedFile;
-use std::io::prelude::*;
+// use std::io::prelude::*;
 // use rocket::http::RawStr;
 use rocket::State;
 use rocket_contrib::Json;
 // use rocket::response::Redirect;
 // use rocket::request::Form;
 
+const LOWER_ALPHA_SPACE_CHARS: &str = "abcdefghijklmnopqrstuvwxyz ";
 const LOWER_ALPHANUMERIC_CHARS: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
+const LOWER_ALPHANUMERIC_SYMBOLS_CHARS: &str = "abcdefghijklmnopqrstuvwxyz0123456789!? ,;.:-_()[]{}&%$";
 
 fn contains_only(s: &str, chars: &str) -> bool{
     s.chars().all(|c| chars.chars().any(|ac| ac==c))
 }
 
-#[allow(dead_code)]
-fn init_db() {
-    let conn=rusqlite::Connection::open("database.sqlite").expect("ERROR: Could not open database");
-    conn.execute("DROP TABLE IF EXISTS Users", &[]).unwrap();
-    conn.execute("DROP TABLE IF EXISTS Plugins", &[]).unwrap();
-    conn.execute("DROP TABLE IF EXISTS Fills", &[]).unwrap();
-    conn.execute("DROP TABLE IF EXISTS Invites", &[]).unwrap();
-    conn.execute("DROP TABLE IF EXISTS Reports", &[]).unwrap();
-
-    conn.execute("CREATE TABLE Users(Id INT UNIQUE, Nick TEXT UNIQUE, PassHash TEXT, Salt TEXT)", &[]).unwrap();
-    conn.execute("CREATE TABLE Plugins(Id INT UNIQUE, Name TEXT UNIQUE, Filling TEXT)", &[]).unwrap();
-    conn.execute("CREATE TABLE Fills(UserId INT, PluginId INT, Responses TEXT)", &[]).unwrap();
-    conn.execute("CREATE TABLE Invites(FromUserId INT, ToUserId INT, PluginId INT)", &[]).unwrap();
-    conn.execute("CREATE TABLE Reports(UserId INT, OtherUserId TEXT, PluginId INT, Report TEXT)", &[]).unwrap();
-
-    let mut sh=salter_hasher::SalterHasher::new();
-    let (s,h)=sh.salt_and_hash("password");
-    conn.execute("INSERT INTO Users VALUES(?, ?, ?, ?)", &[&1, &"toni", &h, &s]).unwrap();
-
-
-    fn get_dollar_separated_file_content(filepath: &str) -> String{
-        let mut f = File::open(filepath).unwrap();
-        let mut content=String::new();
-        f.read_to_string(&mut content).unwrap();
-        content.lines().map(|l| l.into()).collect::<Vec<String>>().join("$")
-    }
-
-    conn.execute("INSERT INTO Plugins VALUES(2, \"Sports\", ?)", &[&get_dollar_separated_file_content("plugins/sports.txt")]).unwrap();
-    conn.execute("INSERT INTO Plugins VALUES(3, \"Foods\", ?)", &[&get_dollar_separated_file_content("plugins/foods.txt")]).unwrap();
-    conn.execute("INSERT INTO Plugins VALUES(4, \"Stuff\", ?)", &[&get_dollar_separated_file_content("plugins/stuff.txt")]).unwrap();
-}
-
-fn get_user_id_if_credentials_are_ok(conn: &Mutex<rusqlite::Connection>, nick: &str, pass: &str) -> Option<isize>{
-    if !contains_only(&nick, LOWER_ALPHANUMERIC_CHARS){
-        return None
-    }
-    match conn.lock() {
-        Err(_) => None,
-        Ok(conn) =>{
-            struct IdPassHashAndSalt(isize, String, String);
-            match conn.query_row("SELECT * FROM Users WHERE Nick=?", &[&nick], |row| IdPassHashAndSalt(row.get(0), row.get(2), row.get(3))){
-                Err(_) => None,
-                Ok(IdPassHashAndSalt(id, pass_hash, salt)) => {
-                    if salter_hasher::SalterHasher::just_hash(pass, salt.as_str()) == pass_hash{
-                        Some(id)
-                    } else {
-                        None
-                    }
-                }
-            }
-        },
-    }
-}
-
-// fn get_plugin_names_if_credentials_are_ok(conn: &Mutex<rusqlite::Connection>, nick: &str, pass: &str) -> Option<Vec<String>>{
-//     if !contains_only(&nick, LOWER_ALPHANUMERIC_CHARS){
-//         return None
-//     }
-//     match conn.lock() {
-//         Err(_) => None,
-//         Ok(conn) =>{
-//             struct PassHashAndSalt(String, String);
-//             match conn.query_row("SELECT * FROM Users WHERE Nick=?", &[&nick], |row| PassHashAndSalt(row.get(2), row.get(3))){
-//                 Err(_) => None,
-//                 Ok(PassHashAndSalt(pass_hash, salt)) => {
-//                     if salter_hasher::SalterHasher::just_hash(pass, salt.as_str()) == pass_hash{
-//                         match conn.prepare("SELECT Name FROM Plugins"){
-//                             Err(_) => None,
-//                             Ok(mut stmt) => {
-//                                 match stmt.query_map(&[], |row| {row.get(0)}) {
-//                                     Err(_) => None,
-//                                     Ok(it) => {
-//                                         Some(it.filter(|x| x.is_ok()).map(|x| x.unwrap()).collect::<Vec<String>>())
-//                                     },
-//                                 }
-//                             },
-//                         }
-//                     } else {
-//                         None
-//                     }
-//                 }
-//             }
-//         },
-//     }
-// }
-
-fn get_plugin_names_from_db(conn: &Mutex<rusqlite::Connection>) -> Vec<String>{
-    match conn.lock() {
-        Err(_) => Vec::new(),
-        Ok(conn) =>{
-            match conn.prepare("SELECT Name FROM Plugins ORDER BY Name"){
-                Err(_) => Vec::new(),
-                Ok(mut stmt) => {
-                    match stmt.query_map(&[], |row| {row.get(0)}) {
-                        Err(_) => Vec::new(),
-                        Ok(it) => {
-                            it.filter(|x| x.is_ok()).map(|x| x.unwrap()).collect::<Vec<String>>()
-                        },
-                    }
-                },
-            }
-        },
-    }
-}
-
-fn get_plugin_filling_from_db(conn: &Mutex<rusqlite::Connection>, name: &str) -> Vec<String>{
-    match conn.lock() {
-        Err(_) => Vec::new(),
-        Ok(conn) =>{
-            struct AString(String);
-            match conn.query_row("SELECT Filling FROM Plugins WHERE Name=?", &[&name], |row| AString(row.get(0))){
-                Err(_) => Vec::new(),
-                Ok(AString(filling)) => {
-                    let mut filling=filling.split("$").map(|x| x.into()).collect::<Vec<String>>();
-                    filling.sort_unstable();
-                    filling
-                }
-            }
-        },
-    }
+struct Poll {
+    number: isize,
+    title: String,
+    questions: Vec<String>,
+    answers: Vec<(String, Vec<String>)>,
 }
 
 #[get("/")]
@@ -162,35 +44,72 @@ fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("resources/").join(file)).ok()
 }
 
+#[post("/poll_name_exists", format = "application/json", data = "<name>")]
+fn poll_name_exists(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<String>) -> Json<bool>{
+    let mut name=name.into_inner();
+    name.make_ascii_lowercase();
+    match polls.lock() {
+        Err(_) => Json(true),
+        Ok(polls) => Json(polls.contains_key(&name)),
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
-struct Credentials {
-    nick: String,
-    pass: String,
+struct ReceivedPoll {
+    name: String,
+    number: isize,
+    title: String,
+    questions: Vec<String>,
 }
 
-#[post("/check_credentials", format = "application/json", data = "<credentials>")]
-fn check_credentials(conn: State<Mutex<rusqlite::Connection>>, credentials: Json<Credentials>) -> Json<bool>{
-    let Credentials{mut nick, pass} = credentials.into_inner();
-    nick.make_ascii_lowercase();
-    Json(get_user_id_if_credentials_are_ok(&conn, nick.as_str(), pass.as_str()).is_some())
-}
+#[post("/start_poll", format = "application/json", data = "<received_poll>")]
+fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<ReceivedPoll>) -> Json<&str>{
+    let mut received_poll=received_poll.into_inner();
+    received_poll.name.make_ascii_lowercase();
+    received_poll.title.make_ascii_lowercase();
+    for q in received_poll.questions.iter_mut(){
+        (*q).make_ascii_lowercase();
+    }
 
-#[get("/get_plugin_names")]
-fn get_plugin_names(conn: State<Mutex<rusqlite::Connection>>) ->Json<Vec<String>>{
-    Json(get_plugin_names_from_db(&conn))
-}
+    if received_poll.name.len() < 3 || received_poll.name.len() > 32 || !contains_only(received_poll.name.as_str(), LOWER_ALPHANUMERIC_CHARS){
+        return Json("Name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+    }
 
-#[post("/get_plugin_filling", format = "application/json", data = "<plugin_name>")]
-fn get_plugin_filling(conn: State<Mutex<rusqlite::Connection>>, plugin_name: Json<String>) -> Json<Vec<String>>{
-    let plugin_name = plugin_name.into_inner();
-    Json(get_plugin_filling_from_db(&conn, plugin_name.as_str()))
+    if received_poll.number < 1 || received_poll.number > 1000{
+        return Json("Number must be between 1 and 1000.")
+    }
+
+    if received_poll.title.len() < 3 || received_poll.title.len() > 32 || !contains_only(received_poll.title.as_str(), LOWER_ALPHANUMERIC_SYMBOLS_CHARS){
+        return Json("Title length must be between 3 and 32 characters long and only contain alphanumeric or these `!? ,;.:-_()[]{}&%$` characters.")
+    }
+
+    if received_poll.questions.len()!=0 && (received_poll.questions.len() < 3 || received_poll.questions.len() > 1000){
+        return Json("There must be between 3 and 1000 questions.")
+    }
+
+    if received_poll.questions.iter().any(|q| (*q).len() < 3 || (*q).len() > 32 || !contains_only((*q).as_str(), LOWER_ALPHA_SPACE_CHARS)){
+        return Json("The length of each question must be between 3 and 32, and only contain letters and spaces.")
+    }
+
+    match polls.lock() {
+        Err(_) => Json("Server error."),
+        Ok(mut polls) => {
+            if polls.contains_key(&received_poll.name){
+                Json("A poll with that name already exists.")
+            } else {
+                let ReceivedPoll{name, number, title, questions}=received_poll;
+                let poll=Poll{number: number, title: title, questions: questions, answers: vec![]};
+                polls.insert(name, poll);
+                Json("success")
+            }
+        },
+    }
 }
 
 fn main() {
-    init_db();
-    let conn=rusqlite::Connection::open("database.sqlite").expect("ERROR: Could not open database");
+    let polls:HashMap<String, Poll>=HashMap::new();
     rocket::ignite()
-    .manage(Mutex::new(conn))
-    .mount("/", routes![index, files, check_credentials, get_plugin_names, get_plugin_filling])
+    .manage(Mutex::new(polls))
+    .mount("/", routes![index, files])
     .launch();
 }

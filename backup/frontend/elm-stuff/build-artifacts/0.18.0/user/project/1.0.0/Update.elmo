@@ -1,0 +1,159 @@
+var _user$project$Update$nav_bar_state_to_needed_cmd = function (new_nav_bar_state) {
+	var _p0 = new_nav_bar_state;
+	switch (_p0.ctor) {
+		case 'NavReports':
+			return _elm_lang$core$Platform_Cmd$none;
+		case 'NavFill':
+			return _user$project$Rest$get_plugin_names;
+		default:
+			return _elm_lang$core$Platform_Cmd$none;
+	}
+};
+var _user$project$Update$http_err_to_string = function (err) {
+	var _p1 = err;
+	switch (_p1.ctor) {
+		case 'BadUrl':
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				'BadUrl(',
+				A2(_elm_lang$core$Basics_ops['++'], _p1._0, ')'));
+		case 'Timeout':
+			return 'Timeout';
+		case 'NetworkError':
+			return 'NetworkError';
+		case 'BadStatus':
+			return 'BadStatus';
+		default:
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				'BadPayload(',
+				A2(_elm_lang$core$Basics_ops['++'], _p1._0, ')'));
+	}
+};
+var _user$project$Update$update = F2(
+	function (msg, model) {
+		var _p2 = msg;
+		switch (_p2.ctor) {
+			case 'SetNavBar':
+				var _p3 = _p2._0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{nav_bar_state: _p3, error_string: ''}),
+					_1: _user$project$Update$nav_bar_state_to_needed_cmd(_p3)
+				};
+			case 'SetNick':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{nick: _p2._0, error_string: ''}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'SetPass':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{pass: _p2._0, error_string: ''}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'LogIn':
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$Rest$check_credentials(model)
+				};
+			case 'LogOut':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{nick: '', pass: '', error_string: '', logged_in: false}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'CheckCredentialsReturn':
+				if (_p2._0.ctor === 'Ok') {
+					return {
+						ctor: '_Tuple2',
+						_0: _p2._0._0 ? _elm_lang$core$Native_Utils.update(
+							model,
+							{logged_in: true, error_string: ''}) : _elm_lang$core$Native_Utils.update(
+							model,
+							{logged_in: false, error_string: 'Erroneous credentials'}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								error_string: A2(
+									_elm_lang$core$Basics_ops['++'],
+									'CheckCredentialsReturn Error: ',
+									_user$project$Update$http_err_to_string(_p2._0._0))
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			case 'GetPluginNamesReturn':
+				if (_p2._0.ctor === 'Ok') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{plugin_names: _p2._0._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								error_string: A2(
+									_elm_lang$core$Basics_ops['++'],
+									'GetPluginNamesReturn Error: ',
+									_user$project$Update$http_err_to_string(_p2._0._0))
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			case 'SelectPlugin':
+				var _p4 = _p2._0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							selected_plugin: _elm_lang$core$Maybe$Just(_p4)
+						}),
+					_1: _user$project$Rest$get_plugin_filling(_p4)
+				};
+			default:
+				if (_p2._0.ctor === 'Ok') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{plugin_filling: _p2._0._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								error_string: A2(
+									_elm_lang$core$Basics_ops['++'],
+									'GetPluginFillingReturn Error: ',
+									_user$project$Update$http_err_to_string(_p2._0._0))
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+		}
+	});

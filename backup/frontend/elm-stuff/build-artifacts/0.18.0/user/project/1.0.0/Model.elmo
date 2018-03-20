@@ -1,0 +1,44 @@
+var _user$project$Model$Model = F8(
+	function (a, b, c, d, e, f, g, h) {
+		return {logged_in: a, nav_bar_state: b, nick: c, pass: d, plugin_names: e, selected_plugin: f, plugin_filling: g, error_string: h};
+	});
+var _user$project$Model$NavInvites = {ctor: 'NavInvites'};
+var _user$project$Model$NavFill = {ctor: 'NavFill'};
+var _user$project$Model$init = {
+	ctor: '_Tuple2',
+	_0: A8(
+		_user$project$Model$Model,
+		true,
+		_user$project$Model$NavFill,
+		'',
+		'',
+		{ctor: '[]'},
+		_elm_lang$core$Maybe$Nothing,
+		{ctor: '[]'},
+		''),
+	_1: _elm_lang$core$Platform_Cmd$none
+};
+var _user$project$Model$NavReports = {ctor: 'NavReports'};
+var _user$project$Model$GetPluginFillingReturn = function (a) {
+	return {ctor: 'GetPluginFillingReturn', _0: a};
+};
+var _user$project$Model$SelectPlugin = function (a) {
+	return {ctor: 'SelectPlugin', _0: a};
+};
+var _user$project$Model$GetPluginNamesReturn = function (a) {
+	return {ctor: 'GetPluginNamesReturn', _0: a};
+};
+var _user$project$Model$CheckCredentialsReturn = function (a) {
+	return {ctor: 'CheckCredentialsReturn', _0: a};
+};
+var _user$project$Model$SetPass = function (a) {
+	return {ctor: 'SetPass', _0: a};
+};
+var _user$project$Model$SetNick = function (a) {
+	return {ctor: 'SetNick', _0: a};
+};
+var _user$project$Model$LogOut = {ctor: 'LogOut'};
+var _user$project$Model$LogIn = {ctor: 'LogIn'};
+var _user$project$Model$SetNavBar = function (a) {
+	return {ctor: 'SetNavBar', _0: a};
+};

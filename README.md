@@ -2,32 +2,64 @@
 
 Web application for finding common interests in sport.
 
-# NOTES
+# Notes
 
- - Report can be a String of ABCs (or YON), standing for Yay, Open, Nope.
+ - Complete backend first. Then worry about frontend.
+    - Or not, for testing.
 
- - Userid 1 is admin.
+ - Empty questions field means poll with free entries.
 
- - Add unique constraint and autoincrement to DB if possible.
+ - Internally, all text is lower case.
 
- - Use get_checked instead of get for sqlite operations.
+# Frontend Design
 
- - Add some backend error handling (mostly just logging).
+ - Navbar has 4 options:
+    - Greeting
+        - Does nothing, just looks nice.
+    - Start poll
+        - Button for poll with predefined questions. Button for poll with free entries.
+        - Field for name: Only those who know the name may join. (Must be unique. Add button to check if already exists).
+        - Field for number of responders needed for result to be seen.
+        - Field for title: Hopefully descriptive title for poll.
+        - If predefined questions: Text entry for questions: Newline separated entries.
+        - If predefined questions: Some predefined questionnaires: Click to auto fill entry for questions (and maybe title).
+    - Fill poll
+        - Initial state:
+            - Field for poll name.
+            - Ok button.
+        - Poll name was selected state (and the name exists).
+            - Show poll title
+            - Input field for responder's name.
+            - If predefined questions: Questions, with buttons to select answer.
+            - Else: Text entry for responses: Newline separated entries.
+            - Button to submit responses.
+    - See poll results
+        - Initial state:
+            - Field for poll name.
+            - Ok button.
+        - Poll name was selected state (and the name exists).
+            - Results are shown if enough responders have responded.
 
- - Sanitize everything comming from the client.
+# Backend Design
 
- - Use a hash function designed to hash passwords.
+    - Poll struct:
+        - Number
+        - Title
+        - Questions
+        - Answers
 
- - When logging out, reset nav state.
+    - Poll map: Name -> Poll
 
- - Since there is no session token, maybe cache recently used `(nick+pass)->id`. Maybe use queue to manage "recently used".
+    - Fn start_poll
 
- - Do not require credentials if not necesary (like for getting plugin names, or plugins themselves).
+    - Fn poll_name_exists
 
- - Rethink when data should be sent to the client (that is, when the client should request it).
+    - Fn has_name_answered_poll
 
- - On credentialized requests return Options, such that wrong credentials yield `None` from server.
+    - Fn get_poll (if exists)
 
- - Backend is inefficient: String allocations everywhere. Maybe try to mend this. Maybe use `RawStr` where possible.
+    - Fn fill_poll (receives array of nums e {0,1,2}) (and name)
 
- - Possible pitfall: Filling may some times (and some times not) be sorted.
+    - Fn fill_free_entry_poll (receives array of strings) (and name)
+
+    - Fn get_poll_results
