@@ -13,6 +13,8 @@ Web application for finding common interests in sport.
 
  - When reporting results, show nothing for empty vector.
 
+ - There might be overflow bugs. Fix them.
+
 # Frontend Design
 
     - Navbar has 4 options:
