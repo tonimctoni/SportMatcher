@@ -10732,7 +10732,10 @@ var _user$project$View$fill_poll = function (model) {
 													{
 														ctor: '::',
 														_0: _elm_lang$html$Html$text(
-															A2(_elm_lang$core$Basics_ops['++'], 'Polling ', model.title)),
+															A2(
+																_elm_lang$core$Basics_ops['++'],
+																'Polling ',
+																_user$project$View$capitalize(model.title))),
 														_1: {ctor: '[]'}
 													}),
 												_1: {
@@ -10969,7 +10972,10 @@ var _user$project$View$fill_poll = function (model) {
 													{
 														ctor: '::',
 														_0: _elm_lang$html$Html$text(
-															A2(_elm_lang$core$Basics_ops['++'], 'Polling ', model.title)),
+															A2(
+																_elm_lang$core$Basics_ops['++'],
+																'Polling ',
+																_user$project$View$capitalize(model.title))),
 														_1: {ctor: '[]'}
 													}),
 												_1: {ctor: '[]'}
@@ -11333,7 +11339,10 @@ var _user$project$View$see_poll = function (model) {
 											{
 												ctor: '::',
 												_0: _elm_lang$html$Html$text(
-													A2(_elm_lang$core$Basics_ops['++'], 'Survey ', model.title)),
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														'Survey ',
+														_user$project$View$capitalize(model.title))),
 												_1: {ctor: '[]'}
 											}),
 										_1: {ctor: '[]'}
@@ -11342,7 +11351,7 @@ var _user$project$View$see_poll = function (model) {
 							}),
 						_1: {
 							ctor: '::',
-							_0: A2(_user$project$View$show_list, 'Users', model.user_names),
+							_0: A2(_user$project$View$show_list, 'Surveyed', model.user_names),
 							_1: {
 								ctor: '::',
 								_0: A2(_user$project$View$show_list, 'Everyone says yay to:', model.all_yay),
@@ -11433,33 +11442,49 @@ var _user$project$View$view = function (model) {
 				{ctor: '[]'}),
 			_1: {
 				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$div,
-					{ctor: '[]'},
+				_0: A3(
+					_elm_lang$html$Html$node,
+					'style',
 					{
 						ctor: '::',
-						_0: _user$project$View$navbar(model.navbar_state),
-						_1: {
-							ctor: '::',
-							_0: function () {
-								var _p2 = model.navbar_state;
-								switch (_p2.ctor) {
-									case 'NavGreeting':
-										return _user$project$View$greeting;
-									case 'NavStartPoll':
-										return _user$project$View$start_poll(model);
-									case 'NavFillPoll':
-										return _user$project$View$fill_poll(model);
-									case 'NavSeePoll':
-										return _user$project$View$see_poll(model);
-									default:
-										return _user$project$View$see_message(model.message);
-								}
-							}(),
-							_1: {ctor: '[]'}
-						}
+						_0: _elm_lang$html$Html_Attributes$type_('text/css'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('body{background-color: black;}'),
+						_1: {ctor: '[]'}
 					}),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$div,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: _user$project$View$navbar(model.navbar_state),
+							_1: {
+								ctor: '::',
+								_0: function () {
+									var _p2 = model.navbar_state;
+									switch (_p2.ctor) {
+										case 'NavGreeting':
+											return _user$project$View$greeting;
+										case 'NavStartPoll':
+											return _user$project$View$start_poll(model);
+										case 'NavFillPoll':
+											return _user$project$View$fill_poll(model);
+										case 'NavSeePoll':
+											return _user$project$View$see_poll(model);
+										default:
+											return _user$project$View$see_message(model.message);
+									}
+								}(),
+								_1: {ctor: '[]'}
+							}
+						}),
+					_1: {ctor: '[]'}
+				}
 			}
 		});
 };

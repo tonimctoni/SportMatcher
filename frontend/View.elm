@@ -95,7 +95,7 @@ fill_poll model =
       ]
     else if Array.length model.gotten_questions==0 then
       [ div [] 
-        [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text ("Polling "++model.title)], p [] [text "(Free entry)"]]]
+        [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text ("Polling "++(capitalize model.title))], p [] [text "(Free entry)"]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
         , div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style [("margin-top", ".2cm"), ("margin-bottom", ".2cm")], onInput UpdateFreeAnswers, value model.free_answers] []]]
         , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitFreeAnswers] [text "Submit"]]]
@@ -104,7 +104,7 @@ fill_poll model =
       ]
     else
       [ div []
-        [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text ("Polling "++model.title)]]]
+        [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text ("Polling "++(capitalize model.title))]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
         , div [] (Array.toList (Array.indexedMap (button_row model) model.gotten_questions))
         , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitFixedAnswers] [text "Submit"]]]
@@ -135,8 +135,8 @@ see_poll model =
       , div [] [if String.length model.error>0 then p [style [("font-weight", "bold"), ("color", "red")]] [text model.error] else div [] []]
       ]
     else
-      [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text ("Survey "++model.title)]]]
-      , (show_list "Users" model.user_names)
+      [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text ("Survey "++(capitalize model.title))]]]
+      , (show_list "Surveyed" model.user_names)
       , (show_list "Everyone says yay to:" model.all_yay)
       , (show_list "Everyone is at least open to trying: " model.all_open)
       , if List.length model.all_yay==0 && List.length model.all_open==0 then div [] [text "There are no categories all surveyed are at least open to."] else div [] []
@@ -155,7 +155,7 @@ view: Model -> Html Msg
 view model =
   div []
   [node "link" [ rel "stylesheet", href "/bootstrap/css/bootstrap.min.css"] []
-  --, node "style" [type_ "text/css"] [text "body{background-image: url('/darkness640.jpg');}"]
+  , node "style" [type_ "text/css"] [text "body{background-color: black;}"]
   , div []
     [ navbar model.navbar_state
     , case model.navbar_state of
