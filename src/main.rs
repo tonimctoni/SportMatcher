@@ -261,22 +261,15 @@ struct PollResult {
     poll_title: String,
     user_names: Vec<String>,
     all_yay: Vec<String>,
-    some_yay_others_open: Vec<String>,
+    all_open: Vec<String>,
     error_string: String,
 }
-
-// struct Poll {
-//     number: isize,
-//     title: String,
-//     questions: Vec<String>,
-//     answers: Vec<(String, Vec<String>)>,
-// }
 
 #[post("/get_poll_results", format = "application/json", data = "<name>")]
 fn get_poll_results(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<String>) -> Json<PollResult>{
     let mut name=name.into_inner();
     name.make_ascii_lowercase();
-    let mut resutl_template=PollResult{poll_title: "".into(), user_names: vec![], all_yay: vec![], some_yay_others_open: vec![], error_string: "".into()};
+    let mut resutl_template=PollResult{poll_title: "".into(), user_names: vec![], all_yay: vec![], all_open: vec![], error_string: "".into()};
     match polls.lock() {
         Err(_) => {
             resutl_template.error_string="Server error.".into();
@@ -288,13 +281,13 @@ fn get_poll_results(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<Strin
                 Json(resutl_template)
             },
             Some(poll) => {
+                resutl_template.poll_title=poll.title.clone();
+                resutl_template.user_names=poll.answers.iter().map(|x| (*x).0.clone()).collect::<Vec<String>>();
                 if poll.answers.len() < poll.number as usize || poll.answers.len() < 2{
                     resutl_template.error_string=format!("This poll needs at least {} responses, but it only has {}.", poll.number, poll.answers.len());
                     Json(resutl_template)
                 }
                 else if poll.questions.is_empty(){
-                    resutl_template.poll_title=poll.title.clone();
-                    resutl_template.user_names=poll.answers.iter().map(|x| (*x).0.clone()).collect::<Vec<String>>();
                     match poll.answers.split_first() {
                         None => {
                             resutl_template.error_string="Server error.".into();
@@ -306,7 +299,20 @@ fn get_poll_results(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<Strin
                         },
                     }
                 } else {
-                    Json(resutl_template)
+                    if !poll.answers.iter().all(|a| (*a).1.len()==poll.questions.len()){
+                        resutl_template.error_string="Server error.".into();
+                        Json(resutl_template)
+                    } else{
+                        resutl_template.all_yay=poll.questions.iter().enumerate().filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]=="y")).map(|ia| ia.1).cloned().collect::<Vec<String>>();
+                        resutl_template.all_open=poll.questions.iter()
+                        .enumerate()
+                        .filter(|ia| !poll.answers.iter().all(|a| a.1[ia.0]=="y"))
+                        .filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]!="n"))
+                        .map(|ia| ia.1)
+                        .cloned()
+                        .collect::<Vec<String>>();
+                        Json(resutl_template)
+                    }
                 }
             },
         },
@@ -317,6 +323,6 @@ fn main() {
     let polls:HashMap<String, Poll>=HashMap::new();
     rocket::ignite()
     .manage(Mutex::new(polls))
-    .mount("/", routes![index, files])
+    .mount("/", routes![index, files, poll_name_exists, start_poll, has_user_answered_poll, get_poll, fill_poll, fill_free_entry_poll, get_poll_results])
     .launch();
 }
