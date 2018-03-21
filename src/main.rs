@@ -307,8 +307,7 @@ fn get_poll_results(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<Strin
                     } else{
                         result_template.all_yay=poll.questions.iter()
                         .enumerate()
-                        .filter(|ia| poll.answers.iter()
-                        .all(|a| a.1[ia.0]=="y"))
+                        .filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]=="y"))
                         .map(|ia| ia.1)
                         .cloned()
                         .collect::<Vec<String>>();

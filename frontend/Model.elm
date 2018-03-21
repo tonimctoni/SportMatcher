@@ -77,10 +77,23 @@ type NavBarState
 
 type Msg
   = SetNavBar NavBarState
+  | UpdateName String
+  | UpdateTitle String
+  | UpdateNumber String
+  | ClickedFree
+  | ClickedFixed
 
 type alias Model =
   { navbar_state: NavBarState
+  , name: String
+  , number: Int
+  , title: String
+  , qtype_is_free: Bool
+  , questions: String
+  , un_error: String
+  , name_val_error: String
+  , title_val_error: String
   }
 
 init: (Model, Cmd Msg)
-init = (Model NavGreeting , Cmd.none)
+init = (Model NavStartPoll "" 0 "" False "" "" "" "", Cmd.none)

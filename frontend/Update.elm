@@ -67,8 +67,29 @@ import Model exposing (..)
 --    GetPluginFillingReturn (Ok plugin_filling) -> ({model | plugin_filling=plugin_filling}, Cmd.none)
 --    GetPluginFillingReturn (Err err) -> ({model | error_string="GetPluginFillingReturn Error: "++(http_err_to_string err)}, Cmd.none)
 
+--validate_start_poll_form: Model -> Bool
+--validate_start_poll_form model =
+--  if String.length model.un_error==0 && model.number>1 && model.number<=1000 then
+--    True
+--  else
+--    False
+
+validate_name: String -> String
+validate_name name =
+  if String.length name < 3 || String.length name > 32 then "Name length must be between 2 and 32." else ""
+
+validate_title: String -> String
+validate_title title =
+  if String.length title < 3 || String.length title > 32 then "Title length must be between 2 and 32." else ""
 
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     SetNavBar navbar_state -> ({model | navbar_state=navbar_state}, Cmd.none)
+    UpdateName name -> ({model | name=name, name_val_error=validate_name name}, Cmd.none)
+    UpdateTitle title -> ({model | title=title, title_val_error=validate_title title}, Cmd.none)
+    UpdateNumber number -> case String.toInt number of
+      Ok number -> ({model | number=number, un_error=if number<2 || number>1000 then "Number must be between 2 and 1000"  else ""}, Cmd.none)
+      Err error -> ({model | un_error=error}, Cmd.none)
+    ClickedFree -> ({model | qtype_is_free=True}, Cmd.none)
+    ClickedFixed -> ({model | qtype_is_free=False}, Cmd.none)

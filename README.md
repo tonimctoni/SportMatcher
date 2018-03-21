@@ -15,6 +15,8 @@ Web application for finding common interests in sport.
 
  - There might be overflow bugs. Also narrowing bugs. Fix them.
 
+ - All validation should happen server side.
+
 # Frontend Design
 
     - Navbar has 4 options:

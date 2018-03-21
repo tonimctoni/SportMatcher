@@ -172,16 +172,26 @@ greeting =
   [ h1 [] [text "greeting"]
   ]
 
-start_poll: Html Msg
-start_poll =
-  div []
+start_poll: Model -> Html Msg
+start_poll model =
+  div [class "container"]
   [ h1 [style [("margin", ".2cm")]] [text "Start Poll"]
-  , div [class "container", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red"), ("width", "6cm")]]
-    [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Name"] []]]
-    , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Number"] []]]
-    , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Title"] []]]
-    , div [class "row"] [div [class "col-md-4"] [button [] [text "Ok"]], div [class "col-md-4"] [button [] [text "Ok"]]]
+  , div [class "col-md-6", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red")]]
+    [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Name", onInput UpdateName] []]]
+    , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Number", onInput UpdateNumber] []]]
+    , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Title", onInput UpdateTitle] []]]
+    --, div [class "row"] [div [class "col-md-5"] [button [] [text "Ok"]], div [class "col-md-5"] [button [] [text "Ok"]]]
+    , div [class "row"]
+      [ div [class "btn-group col-md-4", style [("margin-top", ".2cm")]]
+        [ button [class "btn btn-primary", disabled model.qtype_is_free, onClick ClickedFree] [text "Free"]
+        , button [class "btn btn-primary", disabled (not model.qtype_is_free), onClick ClickedFixed] [text "Fixed"]
+        ]
+      ]
+    , div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style [("margin-top", ".2cm"), ("margin-bot", ".2cm")]] []]]
     , div [class "row"] [div [class "col-md-4"] [button [] [text "Submit"]]]
+    , if String.length model.un_error>0 then div [] [p [style [("font-weight", "bold"), ("color", "red")]] [text model.un_error]] else div [] []
+    , if String.length model.name_val_error>0 then div [] [p [style [("font-weight", "bold"), ("color", "red")]] [text model.name_val_error]] else div [] []
+    , if String.length model.title_val_error>0 then div [] [p [style [("font-weight", "bold"), ("color", "red")]] [text model.title_val_error]] else div [] []
     ]
   ]
 
@@ -206,8 +216,9 @@ view model =
     [ navbar model.navbar_state
     , case model.navbar_state of
       NavGreeting -> greeting
-      NavStartPoll -> start_poll
+      NavStartPoll -> start_poll model
       NavFillPoll -> fill_poll
       NavSeePoll -> see_poll
     ]
+  , div [] [text (toString model)]
   ]
