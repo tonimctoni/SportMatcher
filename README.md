@@ -17,6 +17,8 @@ Web application for finding common interests in sport.
 
  - All validation should happen server side.
 
+ - Clean form data when navbar is clicked.
+
 # Frontend Design
 
     - Navbar has 4 options:

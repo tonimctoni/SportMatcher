@@ -1,6 +1,6 @@
 module Model exposing (..)
 
---import Http
+import Http
 --import Time exposing (Time)
 
 --type Site
@@ -74,6 +74,7 @@ type NavBarState
   | NavStartPoll
   | NavFillPoll
   | NavSeePoll
+  | NavMessage
 
 type Msg
   = SetNavBar NavBarState
@@ -82,6 +83,10 @@ type Msg
   | UpdateNumber String
   | ClickedFree
   | ClickedFixed
+  | UpdateQuestions String
+  | ClickedSubmitPoll
+  | StartPollReturn (Result Http.Error String)
+  --| PollNameExistsReturn (Result Http.Error Bool)
 
 type alias Model =
   { navbar_state: NavBarState
@@ -90,10 +95,9 @@ type alias Model =
   , title: String
   , qtype_is_free: Bool
   , questions: String
-  , un_error: String
-  , name_val_error: String
-  , title_val_error: String
+  , start_poll_error: String
+  , message: String
   }
 
 init: (Model, Cmd Msg)
-init = (Model NavStartPoll "" 0 "" False "" "" "" "", Cmd.none)
+init = (Model NavStartPoll "" 0 "" False "" "" "", Cmd.none)

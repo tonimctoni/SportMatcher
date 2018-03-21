@@ -75,3 +75,38 @@ import Json.Encode as Encode
 --    return_plugin_filling_decoder = Decode.list Decode.string
 --  in
 --    Http.send GetPluginFillingReturn (Http.post "/get_plugin_filling" (body) return_plugin_filling_decoder)
+
+
+start_poll: Model -> Cmd Msg
+start_poll model =
+  let
+    questions=if model.qtype_is_free
+      then ""
+      else if String.length model.questions==0
+        then "a"
+        else model.questions
+    body =
+      [ ("name", Encode.string model.name)
+      , ("number", Encode.int model.number)
+      , ("title", Encode.string model.title)
+      , ("questions", Encode.string questions)
+      ]
+      |> Encode.object
+      |> Http.jsonBody
+
+    return_string_decoder = Decode.string
+  in
+    Http.send StartPollReturn (Http.post "/start_poll" (body) return_string_decoder)
+
+
+--poll_name_exists: Model -> Cmd Msg
+--poll_name_exists model =
+--  let
+--    body =
+--      model.name
+--      |> Encode.string
+--      |> Http.jsonBody
+
+--    return_bool_decoder = Decode.bool
+--  in
+--    Http.send PollNameExistsReturn (Http.post "/poll_name_exists" (body) return_bool_decoder)

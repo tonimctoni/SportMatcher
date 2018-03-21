@@ -156,9 +156,9 @@ navbar navbar_state =
       [ a [class "navbar-brand", style [("color", "purple")], href "javascript:;", onClick (SetNavBar NavGreeting)] [text "Matcher"]
       ]
     , ul [class "nav navbar-nav"]
-      [ li (if navbar_state==NavStartPoll then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavStartPoll)] [text "Start Poll"]]
-      , li (if navbar_state==NavFillPoll then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavFillPoll)] [text "Fill Poll"]]
-      , li (if navbar_state==NavSeePoll then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavSeePoll)] [text "See Poll"]]
+      [ li (if navbar_state==NavStartPoll then [class "active disabled"] else []) [a [href "javascript:;", onClick (SetNavBar NavStartPoll)] [text "Start Poll"]]
+      , li (if navbar_state==NavFillPoll then [class "active disabled"] else []) [a [href "javascript:;", onClick (SetNavBar NavFillPoll)] [text "Fill Poll"]]
+      , li (if navbar_state==NavSeePoll then [class "active disabled"] else []) [a [href "javascript:;", onClick (SetNavBar NavSeePoll)] [text "See Poll"]]
       ]
     --, ul [class "nav navbar-nav navbar-right"]
     --  [ li [] [a [href "javascript:;", onClick LogOut] [span [class "glyphicon glyphicon-log-out"] [], text " Unlogin"]]
@@ -180,18 +180,17 @@ start_poll model =
     [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Name", onInput UpdateName] []]]
     , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Number", onInput UpdateNumber] []]]
     , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Title", onInput UpdateTitle] []]]
-    --, div [class "row"] [div [class "col-md-5"] [button [] [text "Ok"]], div [class "col-md-5"] [button [] [text "Ok"]]]
     , div [class "row"]
       [ div [class "btn-group col-md-4", style [("margin-top", ".2cm")]]
         [ button [class "btn btn-primary", disabled model.qtype_is_free, onClick ClickedFree] [text "Free"]
         , button [class "btn btn-primary", disabled (not model.qtype_is_free), onClick ClickedFixed] [text "Fixed"]
         ]
       ]
-    , div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style [("margin-top", ".2cm"), ("margin-bot", ".2cm")]] []]]
-    , div [class "row"] [div [class "col-md-4"] [button [] [text "Submit"]]]
-    , if String.length model.un_error>0 then div [] [p [style [("font-weight", "bold"), ("color", "red")]] [text model.un_error]] else div [] []
-    , if String.length model.name_val_error>0 then div [] [p [style [("font-weight", "bold"), ("color", "red")]] [text model.name_val_error]] else div [] []
-    , if String.length model.title_val_error>0 then div [] [p [style [("font-weight", "bold"), ("color", "red")]] [text model.title_val_error]] else div [] []
+    , if model.qtype_is_free
+        then div [] []
+        else div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style [("margin-top", ".2cm"), ("margin-bot", ".2cm")], onInput UpdateQuestions] []]]
+    , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitPoll] [text "Submit"]]]
+    , div [] [if String.length model.start_poll_error>0 then p [style [("font-weight", "bold"), ("color", "red")]] [text model.start_poll_error] else div [] []]
     ]
   ]
 
@@ -207,6 +206,12 @@ see_poll =
   [ h1 [] [text "see_poll"]
   ]
 
+see_message: String -> Html Msg
+see_message message =
+  div []
+  [ p [style [("font-weight", "bold"), ("color", "red"), ("font-size", "20px")]] [text message]
+  ]
+
 view: Model -> Html Msg
 view model =
   div []
@@ -219,6 +224,7 @@ view model =
       NavStartPoll -> start_poll model
       NavFillPoll -> fill_poll
       NavSeePoll -> see_poll
+      NavMessage -> see_message model.message
     ]
   , div [] [text (toString model)]
   ]

@@ -103,7 +103,7 @@ fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<Re
             } else {
                 let poll=Poll{number: number, title: title, questions: questions, answers: vec![]};
                 polls.insert(name, poll);
-                Json("success")
+                Json("")
             }
         },
     }
@@ -247,7 +247,7 @@ fn fill_free_entry_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_respons
                     Json("The number of poll questions and answers is different.")
                 } else {
                     poll.answers.push((user_name, answers));
-                    Json("success")
+                    Json("")
                 }
             },
         },

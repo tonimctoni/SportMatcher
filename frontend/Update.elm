@@ -1,8 +1,8 @@
 module Update exposing (update)
 
---import Rest exposing (..)
+import Rest exposing (..)
 import Model exposing (..)
---import Http
+import Http
 
 --choose_name: Model -> (Model, Cmd Msg)
 --choose_name model =
@@ -74,22 +74,38 @@ import Model exposing (..)
 --  else
 --    False
 
-validate_name: String -> String
-validate_name name =
-  if String.length name < 3 || String.length name > 32 then "Name length must be between 2 and 32." else ""
-
-validate_title: String -> String
-validate_title title =
-  if String.length title < 3 || String.length title > 32 then "Title length must be between 2 and 32." else ""
+http_err_to_string: Http.Error -> String
+http_err_to_string err =
+  case err of
+    Http.BadUrl s -> "BadUrl("++s++")"
+    Http.Timeout -> "Timeout"
+    Http.NetworkError -> "NetworkError"
+    Http.BadStatus _ -> "BadStatus"
+    Http.BadPayload s _ -> "BadPayload("++s++")"
 
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    SetNavBar navbar_state -> ({model | navbar_state=navbar_state}, Cmd.none)
-    UpdateName name -> ({model | name=name, name_val_error=validate_name name}, Cmd.none)
-    UpdateTitle title -> ({model | title=title, title_val_error=validate_title title}, Cmd.none)
+    SetNavBar navbar_state -> ({model | 
+      navbar_state=navbar_state,
+      name="",
+      number=0,
+      title="",
+      qtype_is_free=False,
+      questions="",
+      start_poll_error="",
+      message=""
+      }, Cmd.none)
+    UpdateName name -> ({model | name=name}, Cmd.none)
+    UpdateTitle title -> ({model | title=title}, Cmd.none)
+    UpdateQuestions questions -> ({model | questions=questions}, Cmd.none)
     UpdateNumber number -> case String.toInt number of
-      Ok number -> ({model | number=number, un_error=if number<2 || number>1000 then "Number must be between 2 and 1000"  else ""}, Cmd.none)
-      Err error -> ({model | un_error=error}, Cmd.none)
+      Ok number -> ({model | number=number}, Cmd.none)
+      Err _ -> ({model | number=0}, Cmd.none)
     ClickedFree -> ({model | qtype_is_free=True}, Cmd.none)
     ClickedFixed -> ({model | qtype_is_free=False}, Cmd.none)
+    ClickedSubmitPoll -> (model, start_poll model)
+    StartPollReturn (Ok return_string) -> if String.length return_string>0
+      then ({model | start_poll_error="Error: "++return_string}, Cmd.none)
+      else ({model | navbar_state=NavMessage, message="Poll was added successfully. Its name is: "++model.name}, Cmd.none)
+    StartPollReturn (Err err) -> ({model | start_poll_error="StartPollReturn Error: "++(http_err_to_string err)}, Cmd.none)
