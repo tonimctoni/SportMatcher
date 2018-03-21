@@ -86,7 +86,7 @@ start_poll model =
         then "a"
         else model.questions
     body =
-      [ ("name", Encode.string model.name)
+      [ ("name", Encode.string model.poll_name)
       , ("number", Encode.int model.number)
       , ("title", Encode.string model.title)
       , ("questions", Encode.string questions)
@@ -110,3 +110,35 @@ start_poll model =
 --    return_bool_decoder = Decode.bool
 --  in
 --    Http.send PollNameExistsReturn (Http.post "/poll_name_exists" (body) return_bool_decoder)
+
+get_poll: Model -> Cmd Msg
+get_poll model =
+  let
+    body =
+      model.poll_name
+      |> Encode.string
+      |> Http.jsonBody
+
+    return_gotten_poll_decoder = Decode.map2 GottenPoll
+      (Decode.field "title" Decode.string)
+      (Decode.field "questions" (Decode.array Decode.string))
+
+    return_nullable_gotten_poll_decoder = Decode.nullable return_gotten_poll_decoder
+  in
+    Http.send GetPollReturn (Http.post "/get_poll" (body) return_nullable_gotten_poll_decoder)
+
+
+fill_free_entry_poll: Model -> Cmd Msg
+fill_free_entry_poll model =
+  let
+    body =
+      [ ("poll_name", Encode.string model.poll_name)
+      , ("user_name", Encode.string model.user_name)
+      , ("answers", Encode.string model.free_answers)
+      ]
+      |> Encode.object
+      |> Http.jsonBody
+
+    return_string_decoder = Decode.string
+  in
+    Http.send FillFreeEntryReturn (Http.post "/fill_free_entry_poll" (body) return_string_decoder)

@@ -3,6 +3,7 @@ module Update exposing (update)
 import Rest exposing (..)
 import Model exposing (..)
 import Http
+import Array
 
 --choose_name: Model -> (Model, Cmd Msg)
 --choose_name model =
@@ -86,26 +87,42 @@ http_err_to_string err =
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    SetNavBar navbar_state -> ({model | 
+    SetNavBar navbar_state -> if navbar_state==model.navbar_state
+      then (model, Cmd.none)
+      else ({model | 
       navbar_state=navbar_state,
-      name="",
+      poll_name="",
       number=0,
       title="",
       qtype_is_free=False,
       questions="",
-      start_poll_error="",
-      message=""
+      error="",
+      message="",
+      gotten_questions=Array.empty,
+      free_answers="",
+      user_name=""
       }, Cmd.none)
-    UpdateName name -> ({model | name=name}, Cmd.none)
+    UpdatePollName poll_name -> ({model | poll_name=poll_name}, Cmd.none)
     UpdateTitle title -> ({model | title=title}, Cmd.none)
     UpdateQuestions questions -> ({model | questions=questions}, Cmd.none)
     UpdateNumber number -> case String.toInt number of
-      Ok number -> ({model | number=number}, Cmd.none)
+      Ok number -> ({model | number=if number>20 then 20 else number}, Cmd.none)
       Err _ -> ({model | number=0}, Cmd.none)
     ClickedFree -> ({model | qtype_is_free=True}, Cmd.none)
     ClickedFixed -> ({model | qtype_is_free=False}, Cmd.none)
     ClickedSubmitPoll -> (model, start_poll model)
     StartPollReturn (Ok return_string) -> if String.length return_string>0
-      then ({model | start_poll_error="Error: "++return_string}, Cmd.none)
-      else ({model | navbar_state=NavMessage, message="Poll was added successfully. Its name is: "++model.name}, Cmd.none)
-    StartPollReturn (Err err) -> ({model | start_poll_error="StartPollReturn Error: "++(http_err_to_string err)}, Cmd.none)
+      then ({model | error="Error: "++return_string}, Cmd.none)
+      else ({model | navbar_state=NavMessage, message="Poll was added successfully. Its name is: "++model.poll_name}, Cmd.none)
+    StartPollReturn (Err err) -> ({model | error="StartPollReturn Error: "++(http_err_to_string err)}, Cmd.none)
+    ClickedGetPoll -> (model, get_poll model)
+    GetPollReturn (Ok (Just gotten_poll)) -> ({model | title=gotten_poll.title, gotten_questions=gotten_poll.questions, error=""}, Cmd.none)
+    GetPollReturn (Ok Nothing) -> ({model | error="Error: A poll by that name does not exist (or there is a serious server error)."}, Cmd.none)
+    GetPollReturn (Err err) -> ({model | error="GetPollReturn Error: "++(http_err_to_string err)}, Cmd.none)
+    UpdateUserName user_name -> ({model | user_name=user_name}, Cmd.none)
+    UpdateFreeAnswers free_answers -> ({model | free_answers=free_answers}, Cmd.none)
+    ClickedSubmitFreeAnswers -> (model, fill_free_entry_poll model)
+    FillFreeEntryReturn (Ok return_string) -> if String.length return_string>0
+      then ({model | error="Error: "++return_string}, Cmd.none)
+      else ({model | navbar_state=NavMessage, message="Answers to poll with name "++model.poll_name++" were submitted successfully."}, Cmd.none)
+    FillFreeEntryReturn (Err err) -> ({model | error="FillFreeEntryReturn Error: "++(http_err_to_string err)}, Cmd.none)

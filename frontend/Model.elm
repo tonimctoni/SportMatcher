@@ -1,6 +1,7 @@
 module Model exposing (..)
 
 import Http
+import Array
 --import Time exposing (Time)
 
 --type Site
@@ -69,6 +70,11 @@ import Http
 ----init = (Model False NavReports "" "" [] "", Cmd.none)
 --init = (Model True NavFill "" "" [] Nothing [] "", Cmd.none)
 
+type alias GottenPoll =
+  { title: String
+  , questions: Array.Array String
+  }
+
 type NavBarState
   = NavGreeting
   | NavStartPoll
@@ -78,7 +84,7 @@ type NavBarState
 
 type Msg
   = SetNavBar NavBarState
-  | UpdateName String
+  | UpdatePollName String
   | UpdateTitle String
   | UpdateNumber String
   | ClickedFree
@@ -87,17 +93,26 @@ type Msg
   | ClickedSubmitPoll
   | StartPollReturn (Result Http.Error String)
   --| PollNameExistsReturn (Result Http.Error Bool)
+  | ClickedGetPoll
+  | GetPollReturn (Result Http.Error (Maybe GottenPoll))
+  | UpdateFreeAnswers String
+  | ClickedSubmitFreeAnswers
+  | UpdateUserName String
+  | FillFreeEntryReturn (Result Http.Error String)
 
 type alias Model =
   { navbar_state: NavBarState
-  , name: String
+  , poll_name: String
   , number: Int
   , title: String
   , qtype_is_free: Bool
   , questions: String
-  , start_poll_error: String
+  , error: String
   , message: String
+  , gotten_questions: Array.Array String
+  , free_answers: String
+  , user_name: String
   }
 
 init: (Model, Cmd Msg)
-init = (Model NavStartPoll "" 0 "" False "" "" "", Cmd.none)
+init = (Model NavFillPoll "" 0 "" False "" "" "" Array.empty "" "", Cmd.none)

@@ -14,6 +14,7 @@ use rocket::response::NamedFile;
 use rocket::State;
 use rocket_contrib::Json;
 
+const LOWER_ALPHA_CHARS: &str = "abcdefghijklmnopqrstuvwxyz";
 const LOWER_ALPHA_SPACE_CHARS: &str = "abcdefghijklmnopqrstuvwxyz ";
 const LOWER_ALPHANUMERIC_CHARS: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
 const LOWER_ALPHANUMERIC_SYMBOLS_CHARS: &str = "abcdefghijklmnopqrstuvwxyz0123456789!? ,;.:-_()[]{}&%$";
@@ -79,8 +80,8 @@ fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<Re
         return Json("Name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
     }
 
-    if number < 2 || number > 1000{
-        return Json("Number must be between 2 and 1000.")
+    if number < 2 || number > 20{
+        return Json("Number must be between 2 and 20.")
     }
 
     if title.len() < 3 || title.len() > 32 || !contains_only(title.as_str(), LOWER_ALPHANUMERIC_SYMBOLS_CHARS){
@@ -166,8 +167,8 @@ fn fill_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<Pol
     poll_response.poll_name.make_ascii_lowercase();
     let PollResponse{user_name, poll_name, answers}=poll_response;
 
-    if user_name.len() < 3 || user_name.len() > 32 || !contains_only(user_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
-        return Json("User name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+    if user_name.len() < 3 || user_name.len() > 32 || !contains_only(user_name.as_str(), LOWER_ALPHA_CHARS){
+        return Json("User name length must be between 3 and 32 characters long and only contain letters.")
     }
 
     if poll_name.len() < 3 || poll_name.len() > 32 || !contains_only(poll_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
@@ -189,7 +190,7 @@ fn fill_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<Pol
                     .collect::<Vec<String>>();
 
                     poll.answers.push((user_name, answers));
-                    Json("success")
+                    Json("")
                 }
             },
         },
@@ -220,8 +221,8 @@ fn fill_free_entry_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_respons
     answers.sort_unstable();
     answers.dedup();
 
-    if user_name.len() < 3 || user_name.len() > 32 || !contains_only(user_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
-        return Json("User name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+    if user_name.len() < 3 || user_name.len() > 32 || !contains_only(user_name.as_str(), LOWER_ALPHA_CHARS){
+        return Json("User name length must be between 3 and 32 characters long and only contain letters.")
     }
 
     if poll_name.len() < 3 || poll_name.len() > 32 || !contains_only(poll_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
@@ -243,8 +244,10 @@ fn fill_free_entry_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_respons
             Some(mut poll) => {
                 if poll.answers.iter().any(|a| (*a).0==user_name){
                     Json("A user with that name has already answered the poll.")
-                } else if poll.questions.len()!=answers.len(){
-                    Json("The number of poll questions and answers is different.")
+                // } else if poll.questions.len()!=answers.len(){
+                //     Json("The number of poll questions and answers is different.")
+                } else if poll.questions.len()!=0{
+                    Json("This poll is not a free entry poll.")
                 } else {
                     poll.answers.push((user_name, answers));
                     Json("")
