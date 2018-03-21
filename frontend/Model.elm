@@ -98,7 +98,10 @@ type Msg
   | UpdateFreeAnswers String
   | ClickedSubmitFreeAnswers
   | UpdateUserName String
-  | FillFreeEntryReturn (Result Http.Error String)
+  | FillFreeEntryPollReturn (Result Http.Error String)
+  | ClickedSubmitFixedAnswers
+  | SetFixedAnswer Int Int
+  | FillFixedPollReturn (Result Http.Error String)
 
 type alias Model =
   { navbar_state: NavBarState
@@ -112,7 +115,8 @@ type alias Model =
   , gotten_questions: Array.Array String
   , free_answers: String
   , user_name: String
+  , fixed_answers: Array.Array Int
   }
 
 init: (Model, Cmd Msg)
-init = (Model NavFillPoll "" 0 "" False "" "" "" Array.empty "" "", Cmd.none)
+init = (Model NavSeePoll "" 0 "" False "" "" "" Array.empty "" "" Array.empty, Cmd.none)

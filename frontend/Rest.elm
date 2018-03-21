@@ -2,6 +2,7 @@ module Rest exposing (..)
 
 import Model exposing (..)
 import Http
+import Array
 import Json.Decode as Decode
 import Json.Encode as Encode
 --elm-package install elm-lang/http
@@ -141,4 +142,19 @@ fill_free_entry_poll model =
 
     return_string_decoder = Decode.string
   in
-    Http.send FillFreeEntryReturn (Http.post "/fill_free_entry_poll" (body) return_string_decoder)
+    Http.send FillFreeEntryPollReturn (Http.post "/fill_free_entry_poll" (body) return_string_decoder)
+
+fill_poll: Model -> Cmd Msg
+fill_poll model =
+  let
+    body =
+      [ ("poll_name", Encode.string model.poll_name)
+      , ("user_name", Encode.string model.user_name)
+      , ("answers", Encode.array (Array.map Encode.int model.fixed_answers))
+      ]
+      |> Encode.object
+      |> Http.jsonBody
+
+    return_string_decoder = Decode.string
+  in
+    Http.send FillFixedPollReturn (Http.post "/fill_poll" (body) return_string_decoder)

@@ -177,7 +177,7 @@ start_poll: Model -> Html Msg
 start_poll model =
   div [class "container"]
   [ h1 [style [("margin", ".2cm")]] [text "Start Poll"]
-  , div [class "col-md-6", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red")]]
+  , div [class "col-md-12", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red")]]
     [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Poll Name", onInput UpdatePollName, value model.poll_name] []]]
     , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Min. Responders", onInput UpdateNumber, value (if model.number==0 then "" else toString model.number)] []]]
     , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Title", onInput UpdateTitle, value model.title] []]]
@@ -189,17 +189,32 @@ start_poll model =
       ]
     , if model.qtype_is_free
         then div [] []
-        else div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style [("margin-top", ".2cm"), ("margin-bot", ".2cm")], onInput UpdateQuestions, value model.questions] []]]
+        else div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style [("margin-top", ".2cm"), ("margin-bottom", ".2cm")], onInput UpdateQuestions, value model.questions] []]]
     , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitPoll] [text "Submit"]]]
     , div [] [if String.length model.error>0 then p [style [("font-weight", "bold"), ("color", "red")]] [text model.error] else div [] []]
     ]
   ]
 
+button_row: Model -> Int -> String -> Html Msg
+button_row model index question =
+  case Array.get index model.fixed_answers of
+    Just state -> div [class "row"]
+      [ div [class "col-md-4"]
+        [ p [style [("font-size", "16px"), ("font-color", "purple"), ("margin-top", ".1cm")]] [text question]
+        , div [class "btn-group", style [("margin-bottom", ".4cm")]]
+          [ button [class "btn btn-primary", disabled (state==2), onClick (SetFixedAnswer index 2)] [text "Yay"]
+          , button [class "btn btn-primary", disabled (state==1), onClick (SetFixedAnswer index 1)] [text "Open to"]
+          , button [class "btn btn-primary", disabled (state==0), onClick (SetFixedAnswer index 0)] [text "Nope"]
+          ]
+        ]
+      ]
+    Nothing -> div [] []
+
 fill_poll: Model -> Html Msg
 fill_poll model =
   div [class "container"]
   [ h1 [style [("margin", ".2cm")]] [text "Fill Poll"]
-  , div [class "col-md-6", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red")]] (
+  , div [class "col-md-12", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red")]] (
     if String.length model.title==0 then
       [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Poll Name", onInput UpdatePollName, onEnter ClickedGetPoll, value model.poll_name] []]]
       , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedGetPoll] [text "Get Poll"]]]
@@ -207,16 +222,19 @@ fill_poll model =
       ]
     else if Array.length model.gotten_questions==0 then
       [ div [] 
-        [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text model.title], p [] [text "(Free entry)"]]]
+        [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text ("Polling "++model.title)], p [] [text "(Free entry)"]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
-        , div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style [("margin-top", ".2cm"), ("margin-bot", ".2cm")], onInput UpdateFreeAnswers, value model.free_answers] []]]
+        , div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style [("margin-top", ".2cm"), ("margin-bottom", ".2cm")], onInput UpdateFreeAnswers, value model.free_answers] []]]
         , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitFreeAnswers] [text "Submit"]]]
         ]
       , div [] [if String.length model.error>0 then p [style [("font-weight", "bold"), ("color", "red")]] [text model.error] else div [] []]
       ]
     else
       [ div []
-        [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text model.title]]]
+        [ div [class "row"] [div [class "col-md-4"] [p [style [("font-weight", "bold"), ("font-size", "20px")]] [text ("Polling "++model.title)]]]
+        , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
+        , div [] (Array.toList (Array.indexedMap (button_row model) model.gotten_questions))
+        , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitFixedAnswers] [text "Submit"]]]
         ]
       , div [] [if String.length model.error>0 then p [style [("font-weight", "bold"), ("color", "red")]] [text model.error] else div [] []]
       ]
