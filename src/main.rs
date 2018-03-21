@@ -9,15 +9,10 @@ extern crate serde_derive;
 use std::collections::HashMap;
 use std::io;
 use std::path::{Path, PathBuf};
-// use std::fs::File;
 use std::sync::Mutex;
 use rocket::response::NamedFile;
-// use std::io::prelude::*;
-// use rocket::http::RawStr;
 use rocket::State;
 use rocket_contrib::Json;
-// use rocket::response::Redirect;
-// use rocket::request::Form;
 
 const LOWER_ALPHA_SPACE_CHARS: &str = "abcdefghijklmnopqrstuvwxyz ";
 const LOWER_ALPHANUMERIC_CHARS: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -189,7 +184,10 @@ fn fill_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<Pol
                 } else if poll.questions.len()!=answers.len(){
                     Json("The number of poll questions and answers is different.")
                 } else {
-                    let answers=answers.into_iter().map(|a| if a==2 {"y".to_string()} else if a==1 {"o".to_string()} else {"n".to_string()}).collect::<Vec<String>>();
+                    let answers=answers.into_iter()
+                    .map(|a| if a==2 {"y".to_string()} else if a==1 {"o".to_string()} else {"n".to_string()})
+                    .collect::<Vec<String>>();
+
                     poll.answers.push((user_name, answers));
                     Json("success")
                 }
@@ -269,49 +267,61 @@ struct PollResult {
 fn get_poll_results(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<String>) -> Json<PollResult>{
     let mut name=name.into_inner();
     name.make_ascii_lowercase();
-    let mut resutl_template=PollResult{poll_title: "".into(), user_names: vec![], all_yay: vec![], all_open: vec![], error_string: "".into()};
+    let mut result_template=PollResult{poll_title: "".into(), user_names: vec![], all_yay: vec![], all_open: vec![], error_string: "".into()};
     match polls.lock() {
         Err(_) => {
-            resutl_template.error_string="Server error.".into();
-            Json(resutl_template)
+            result_template.error_string="Server error.".into();
+            Json(result_template)
         },
         Ok(polls) => match polls.get(&name) {
             None => {
-                resutl_template.error_string="A poll with that name does not exists.".into();
-                Json(resutl_template)
+                result_template.error_string="A poll with that name does not exists.".into();
+                Json(result_template)
             },
             Some(poll) => {
-                resutl_template.poll_title=poll.title.clone();
-                resutl_template.user_names=poll.answers.iter().map(|x| (*x).0.clone()).collect::<Vec<String>>();
+                result_template.poll_title=poll.title.clone();
+                result_template.user_names=poll.answers.iter().map(|x| (*x).0.clone()).collect::<Vec<String>>();
                 if poll.answers.len() < poll.number as usize || poll.answers.len() < 2{
-                    resutl_template.error_string=format!("This poll needs at least {} responses, but it only has {}.", poll.number, poll.answers.len());
-                    Json(resutl_template)
+                    result_template.error_string=format!("This poll needs at least {} responses, but it only has {}.", poll.number, poll.answers.len());
+                    Json(result_template)
                 }
                 else if poll.questions.is_empty(){
                     match poll.answers.split_first() {
                         None => {
-                            resutl_template.error_string="Server error.".into();
-                            Json(resutl_template)
+                            result_template.error_string="Server error.".into();
+                            Json(result_template)
                         },
                         Some((head, tail)) => {
-                            resutl_template.all_yay=head.1.iter().filter(|q| tail.iter().all(|tq| (*tq).1.contains(q))).cloned().collect::<Vec<String>>();
-                            Json(resutl_template)
+                            result_template.all_yay=head.1.iter()
+                            .filter(|q| tail.iter().all(|tq| (*tq).1.contains(q)))
+                            .cloned()
+                            .collect::<Vec<String>>();
+
+                            Json(result_template)
                         },
                     }
                 } else {
                     if !poll.answers.iter().all(|a| (*a).1.len()==poll.questions.len()){
-                        resutl_template.error_string="Server error.".into();
-                        Json(resutl_template)
+                        result_template.error_string="Server error.".into();
+                        Json(result_template)
                     } else{
-                        resutl_template.all_yay=poll.questions.iter().enumerate().filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]=="y")).map(|ia| ia.1).cloned().collect::<Vec<String>>();
-                        resutl_template.all_open=poll.questions.iter()
+                        result_template.all_yay=poll.questions.iter()
+                        .enumerate()
+                        .filter(|ia| poll.answers.iter()
+                        .all(|a| a.1[ia.0]=="y"))
+                        .map(|ia| ia.1)
+                        .cloned()
+                        .collect::<Vec<String>>();
+
+                        result_template.all_open=poll.questions.iter()
                         .enumerate()
                         .filter(|ia| !poll.answers.iter().all(|a| a.1[ia.0]=="y"))
                         .filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]!="n"))
                         .map(|ia| ia.1)
                         .cloned()
                         .collect::<Vec<String>>();
-                        Json(resutl_template)
+
+                        Json(result_template)
                     }
                 }
             },

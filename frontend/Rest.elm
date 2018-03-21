@@ -40,38 +40,38 @@ import Json.Encode as Encode
 --  in
 --    Http.send GetMessagesReturn (Http.post "/get_messages" (body) return_incomming_messages_decoder)
 
-check_credentials: Model -> Cmd Msg
-check_credentials model =
-  let
-    body =
-      [ ("nick", Encode.string model.nick)
-      , ("pass", Encode.string model.pass)
-      ]
-      |> Encode.object
-      |> Http.jsonBody
+--check_credentials: Model -> Cmd Msg
+--check_credentials model =
+--  let
+--    body =
+--      [ ("nick", Encode.string model.nick)
+--      , ("pass", Encode.string model.pass)
+--      ]
+--      |> Encode.object
+--      |> Http.jsonBody
 
-    return_bool_decoder = Decode.bool
-  in
-    Http.send CheckCredentialsReturn (Http.post "/check_credentials" (body) return_bool_decoder)
+--    return_bool_decoder = Decode.bool
+--  in
+--    Http.send CheckCredentialsReturn (Http.post "/check_credentials" (body) return_bool_decoder)
 
-get_plugin_names: Cmd Msg
-get_plugin_names =
-  let
-    return_plugin_names_decoder: Decode.Decoder (List String)
-    return_plugin_names_decoder = 
-      Decode.list Decode.string
-  in
-    Http.send GetPluginNamesReturn (Http.get "/get_plugin_names" return_plugin_names_decoder)
+--get_plugin_names: Cmd Msg
+--get_plugin_names =
+--  let
+--    return_plugin_names_decoder: Decode.Decoder (List String)
+--    return_plugin_names_decoder = 
+--      Decode.list Decode.string
+--  in
+--    Http.send GetPluginNamesReturn (Http.get "/get_plugin_names" return_plugin_names_decoder)
 
-get_plugin_filling: String -> Cmd Msg
-get_plugin_filling selected_plugin =
-  let
-    body =
-      selected_plugin
-      |> Encode.string
-      |> Http.jsonBody
+--get_plugin_filling: String -> Cmd Msg
+--get_plugin_filling selected_plugin =
+--  let
+--    body =
+--      selected_plugin
+--      |> Encode.string
+--      |> Http.jsonBody
 
-    return_plugin_filling_decoder: Decode.Decoder (List String)
-    return_plugin_filling_decoder = Decode.list Decode.string
-  in
-    Http.send GetPluginFillingReturn (Http.post "/get_plugin_filling" (body) return_plugin_filling_decoder)
+--    return_plugin_filling_decoder: Decode.Decoder (List String)
+--    return_plugin_filling_decoder = Decode.list Decode.string
+--  in
+--    Http.send GetPluginFillingReturn (Http.post "/get_plugin_filling" (body) return_plugin_filling_decoder)

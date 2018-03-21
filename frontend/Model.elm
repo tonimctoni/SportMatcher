@@ -1,6 +1,6 @@
 module Model exposing (..)
 
-import Http
+--import Http
 --import Time exposing (Time)
 
 --type Site
@@ -38,33 +38,49 @@ import Http
 --init: (Model, Cmd Msg)
 --init = (Model "" "" [] "" ChooseName, Cmd.none)
 
+--type NavBarState
+--  = NavReports
+--  | NavFill
+--  | NavInvites -- See received and sent. Also make new
+
+--type Msg
+--  = SetNavBar NavBarState
+--  | LogIn
+--  | LogOut
+--  | SetNick String
+--  | SetPass String
+--  | CheckCredentialsReturn (Result Http.Error Bool)
+--  | GetPluginNamesReturn (Result Http.Error (List String))
+--  | SelectPlugin String
+--  | GetPluginFillingReturn (Result Http.Error (List String))
+
+--type alias Model =
+--  { logged_in: Bool
+--  , nav_bar_state: NavBarState
+--  , nick: String
+--  , pass: String
+--  , plugin_names: List String
+--  , selected_plugin: Maybe String
+--  , plugin_filling: List String
+--  , error_string: String
+--  }
+
+--init: (Model, Cmd Msg)
+----init = (Model False NavReports "" "" [] "", Cmd.none)
+--init = (Model True NavFill "" "" [] Nothing [] "", Cmd.none)
+
 type NavBarState
-  = NavReports
-  | NavFill
-  | NavInvites -- See received and sent. Also make new
+  = NavGreeting
+  | NavStartPoll
+  | NavFillPoll
+  | NavSeePoll
 
 type Msg
   = SetNavBar NavBarState
-  | LogIn
-  | LogOut
-  | SetNick String
-  | SetPass String
-  | CheckCredentialsReturn (Result Http.Error Bool)
-  | GetPluginNamesReturn (Result Http.Error (List String))
-  | SelectPlugin String
-  | GetPluginFillingReturn (Result Http.Error (List String))
 
 type alias Model =
-  { logged_in: Bool
-  , nav_bar_state: NavBarState
-  , nick: String
-  , pass: String
-  , plugin_names: List String
-  , selected_plugin: Maybe String
-  , plugin_filling: List String
-  , error_string: String
+  { navbar_state: NavBarState
   }
 
 init: (Model, Cmd Msg)
---init = (Model False NavReports "" "" [] "", Cmd.none)
-init = (Model True NavFill "" "" [] Nothing [] "", Cmd.none)
+init = (Model NavGreeting , Cmd.none)

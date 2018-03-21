@@ -63,87 +63,151 @@ onEnter msg =
 --      Chat -> chat_div model
 --  ]
 
-nav_bar: NavBarState -> Html Msg
-nav_bar nav_bar_state =
+--nav_bar: NavBarState -> Html Msg
+--nav_bar nav_bar_state =
+--  nav [class "navbar navbar-inverse"]
+--  [ div [class "container-fluid"]
+--    [ div [class "navbar-header"]
+--      [ a [class "navbar-brand", style [("color", "purple")], href "javascript:;"] [text "Sport Matcher"]
+--      ]
+--    , ul [class "nav navbar-nav"]
+--      [ li (if nav_bar_state==NavReports then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavReports)] [text "Reports"]]
+--      , li (if nav_bar_state==NavFill then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavFill)] [text "Fill"]]
+--      , li (if nav_bar_state==NavInvites then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavInvites)] [text "Invite"]]
+--      ]
+--    , ul [class "nav navbar-nav navbar-right"]
+--      [ li [] [a [href "javascript:;", onClick LogOut] [span [class "glyphicon glyphicon-log-out"] [], text " Unlogin"]]
+--      ]
+--    ]
+--  ]
+----, ("padding", ".75cm")
+--log_in: Model -> Html Msg
+--log_in model=
+--  div [style 
+--  [ ("position", "fixed")
+--  , ("top", "50%")
+--  , ("left", "50%")
+--  , ("transform", "translate(-50%, -50%)")
+--  , ("background-color", "black")
+--  , ("border-color", "#444444")
+--  , ("border-style", "solid")
+--  , ("border-width", "medium")
+--  , ("padding-left", ".75cm")
+--  , ("padding-right", ".75cm")
+--  , ("padding-bottom", ".75cm")
+--  , ("text-align", "center")
+--  ]]
+--  [ h1 [style [("text-align", "left")]] [text "Login"]
+--  , if String.length model.error_string == 0 then div [] [] else h5 [] [text model.error_string]
+--  , input [type_ "text", placeholder "Name", onInput SetNick] []
+--  , br [] []
+--  , input [type_ "password", placeholder "Password", onInput SetPass, onEnter LogIn] []
+--  , br [] []
+--  , button [onClick LogIn, style [("margin-top", ".5cm")]] [text "Ok"]
+--  ]
+
+--plugin_buttons: Model -> Html Msg
+--plugin_buttons model =
+--  div
+--    [class "col-md-2", style [("text-align", "center"), ("margin", ".1cm")]]
+--    (List.map (\x -> div [] [button [class "btn", style [("margin", ".25cm"), ("width", "3cm")], onClick (SelectPlugin x)] [text x]]) model.plugin_names)
+
+--plugin_filling : Model -> Html Msg
+--plugin_filling model =
+--  case model.selected_plugin of
+--    Nothing -> div [] []
+--    Just selected_plugin -> div [class "col-md-4", style [("border-left", ".075cm dashed #555555")]]
+--      [ div [] []
+--      , div [] (List.map (\x -> h2 [class "text-info"] [text x]) model.plugin_filling)
+--      ]
+
+--nav_fill: Model -> Html Msg
+--nav_fill model =
+--  div [class "container", style [("margin", ".2cm"), ("padding", ".2cm")]]
+--  [ div [class "row"]
+--    [ plugin_buttons model
+--    , plugin_filling model
+--    ]
+--  ]
+
+--view: Model -> Html Msg
+--view model =
+--  div []
+--  [node "link" [ rel "stylesheet", href "/bootstrap/css/bootstrap.min.css"] []
+--  , node "style" [type_ "text/css"] [text "body{background-image: url('/darkness640.jpg');}"]
+--  , if model.logged_in then
+--      div []
+--      [ nav_bar model.nav_bar_state
+--      , if String.length model.error_string == 0 then div [] [] else h5 [] [text model.error_string]
+--      , case model.nav_bar_state of
+--        NavReports -> text "asd"
+--        NavFill -> nav_fill model
+--        NavInvites -> text "zxc"
+--      ]
+--    else
+--      log_in model
+--  ]
+
+navbar: NavBarState -> Html Msg
+navbar navbar_state =
   nav [class "navbar navbar-inverse"]
   [ div [class "container-fluid"]
     [ div [class "navbar-header"]
-      [ a [class "navbar-brand", style [("color", "purple")], href "javascript:;"] [text "Sport Matcher"]
+      [ a [class "navbar-brand", style [("color", "purple")], href "javascript:;", onClick (SetNavBar NavGreeting)] [text "Matcher"]
       ]
     , ul [class "nav navbar-nav"]
-      [ li (if nav_bar_state==NavReports then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavReports)] [text "Reports"]]
-      , li (if nav_bar_state==NavFill then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavFill)] [text "Fill"]]
-      , li (if nav_bar_state==NavInvites then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavInvites)] [text "Invite"]]
+      [ li (if navbar_state==NavStartPoll then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavStartPoll)] [text "Start Poll"]]
+      , li (if navbar_state==NavFillPoll then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavFillPoll)] [text "Fill Poll"]]
+      , li (if navbar_state==NavSeePoll then [class "active"] else []) [a [href "javascript:;", onClick (SetNavBar NavSeePoll)] [text "See Poll"]]
       ]
-    , ul [class "nav navbar-nav navbar-right"]
-      [ li [] [a [href "javascript:;", onClick LogOut] [span [class "glyphicon glyphicon-log-out"] [], text " Unlogin"]]
-      ]
+    --, ul [class "nav navbar-nav navbar-right"]
+    --  [ li [] [a [href "javascript:;", onClick LogOut] [span [class "glyphicon glyphicon-log-out"] [], text " Unlogin"]]
+    --  ]
     ]
   ]
---, ("padding", ".75cm")
-log_in: Model -> Html Msg
-log_in model=
-  div [style 
-  [ ("position", "fixed")
-  , ("top", "50%")
-  , ("left", "50%")
-  , ("transform", "translate(-50%, -50%)")
-  , ("background-color", "black")
-  , ("border-color", "#444444")
-  , ("border-style", "solid")
-  , ("border-width", "medium")
-  , ("padding-left", ".75cm")
-  , ("padding-right", ".75cm")
-  , ("padding-bottom", ".75cm")
-  , ("text-align", "center")
-  ]]
-  [ h1 [style [("text-align", "left")]] [text "Login"]
-  , if String.length model.error_string == 0 then div [] [] else h5 [] [text model.error_string]
-  , input [type_ "text", placeholder "Name", onInput SetNick] []
-  , br [] []
-  , input [type_ "password", placeholder "Password", onInput SetPass, onEnter LogIn] []
-  , br [] []
-  , button [onClick LogIn, style [("margin-top", ".5cm")]] [text "Ok"]
+
+greeting: Html Msg
+greeting =
+  div []
+  [ h1 [] [text "greeting"]
   ]
 
-plugin_buttons: Model -> Html Msg
-plugin_buttons model =
-  div
-    [class "col-md-2", style [("text-align", "center"), ("margin", ".1cm")]]
-    (List.map (\x -> div [] [button [class "btn", style [("margin", ".25cm"), ("width", "3cm")], onClick (SelectPlugin x)] [text x]]) model.plugin_names)
-
-plugin_filling : Model -> Html Msg
-plugin_filling model =
-  case model.selected_plugin of
-    Nothing -> div [] []
-    Just selected_plugin -> div [class "col-md-4", style [("border-left", ".075cm dashed #555555")]]
-      [ div [] []
-      , div [] (List.map (\x -> h2 [class "text-info"] [text x]) model.plugin_filling)
-      ]
-
-nav_fill: Model -> Html Msg
-nav_fill model =
-  div [class "container", style [("margin", ".2cm"), ("padding", ".2cm")]]
-  [ div [class "row"]
-    [ plugin_buttons model
-    , plugin_filling model
+start_poll: Html Msg
+start_poll =
+  div []
+  [ h1 [style [("margin", ".2cm")]] [text "Start Poll"]
+  , div [class "container", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red"), ("width", "6cm")]]
+    [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Name"] []]]
+    , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Number"] []]]
+    , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Title"] []]]
+    , div [class "row"] [div [class "col-md-4"] [button [] [text "Ok"]], div [class "col-md-4"] [button [] [text "Ok"]]]
+    , div [class "row"] [div [class "col-md-4"] [button [] [text "Submit"]]]
     ]
+  ]
+
+fill_poll: Html Msg
+fill_poll =
+  div []
+  [ h1 [] [text "fill_poll"]
+  ]
+
+see_poll: Html Msg
+see_poll =
+  div []
+  [ h1 [] [text "see_poll"]
   ]
 
 view: Model -> Html Msg
 view model =
   div []
   [node "link" [ rel "stylesheet", href "/bootstrap/css/bootstrap.min.css"] []
-  , node "style" [type_ "text/css"] [text "body{background-image: url('/darkness640.jpg');}"]
-  , if model.logged_in then
-      div []
-      [ nav_bar model.nav_bar_state
-      , if String.length model.error_string == 0 then div [] [] else h5 [] [text model.error_string]
-      , case model.nav_bar_state of
-        NavReports -> text "asd"
-        NavFill -> nav_fill model
-        NavInvites -> text "zxc"
-      ]
-    else
-      log_in model
+  --, node "style" [type_ "text/css"] [text "body{background-image: url('/darkness640.jpg');}"]
+  , div []
+    [ navbar model.navbar_state
+    , case model.navbar_state of
+      NavGreeting -> greeting
+      NavStartPoll -> start_poll
+      NavFillPoll -> fill_poll
+      NavSeePoll -> see_poll
+    ]
   ]

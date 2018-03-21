@@ -4,12 +4,6 @@ import Model exposing (..)
 import Update exposing (update)
 import View exposing (view)
 
---subscriptions: Model -> Sub Msg
---subscriptions model=
---  if model.site==Chat then Time.every second TimeToCheckForMessages else Sub.none
---  --Time.every second TimeToCheckForMessages
---  --Sub.none
-
 subscriptions: Model -> Sub Msg
 subscriptions model =
   Sub.none
