@@ -21,6 +21,8 @@ Web application for finding common interests in sport.
 
  - Add explanation of input fields somewhere.
 
+ - Capitalize some names with strin operations on client side.
+
 # Frontend Design
 
     - Navbar has 4 options:

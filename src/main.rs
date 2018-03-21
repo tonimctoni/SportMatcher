@@ -175,6 +175,10 @@ fn fill_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<Pol
         return Json("Poll name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
     }
 
+    if answers.iter().all(|x| (*x)==0){
+        return Json("At least one of the categories must be agreed with.")
+    }
+
     match polls.lock() {
         Err(_) => Json("Server error."),
         Ok(mut polls) => match polls.get_mut(&poll_name) {
