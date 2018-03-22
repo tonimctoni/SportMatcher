@@ -73,7 +73,7 @@ button_row model index question =
   case Array.get index model.fixed_answers of
     Just state -> div [class "row"]
       [ div [class "col-md-4"]
-        [ p [style [("font-size", "16px"), ("font-color", "purple"), ("margin-top", ".1cm")]] [text (capitalize question)]
+        [ p [style [("font-size", "16px"), ("margin-top", ".1cm")]] [text (capitalize question)]
         , div [class "btn-group", style [("margin-bottom", ".4cm")]]
           [ button [class "btn btn-primary", disabled (state==2), onClick (SetFixedAnswer index 2)] [text "Yay"]
           , button [class "btn btn-primary", disabled (state==1), onClick (SetFixedAnswer index 1)] [text "Open to"]

@@ -64,6 +64,7 @@ fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<Re
     received_poll.name.make_ascii_lowercase();
     received_poll.title.make_ascii_lowercase();
     let ReceivedPoll{name, number, title, questions}=received_poll;
+    let free_answers=questions.len()==0;
     let mut questions=questions
     .lines()
     .map(|l| {
@@ -71,6 +72,7 @@ fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<Re
         l.make_ascii_lowercase();
         l
     })
+    .filter(|s| (*s).len()!=0)
     .collect::<Vec<String>>();
     questions.sort_unstable();
     questions.dedup();
@@ -88,12 +90,12 @@ fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<Re
         return Json("Title length must be between 3 and 32 characters long and only contain alphanumeric or these `!? ,;.:-_()[]{}&%$` characters.")
     }
 
-    if questions.len()!=0 && (questions.len() < 3 || questions.len() > 1000){
+    if !free_answers && (questions.len() < 3 || questions.len() > 1000){
         return Json("There must be between 3 and 1000 unique questions.")
     }
 
-    if questions.iter().any(|q| (*q).len() < 3 || (*q).len() > 32 || !contains_only((*q).as_str(), LOWER_ALPHA_SPACE_CHARS)){
-        return Json("The length of each question must be between 3 and 32, and only contain letters and spaces.")
+    if questions.iter().any(|q| (*q).len() < 3 || (*q).len() > 50 || !contains_only((*q).as_str(), LOWER_ALPHA_SPACE_CHARS)){
+        return Json("The length of each question must be between 3 and 50, and only contain letters and spaces.")
     }
 
     match polls.lock() {
@@ -179,6 +181,10 @@ fn fill_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<Pol
         return Json("At least one of the categories must be agreed with.")
     }
 
+    if !answers.iter().all(|x| (*x)==0 || (*x)==1 || (*x)==2){
+        return Json("An answer must be given to each category.")
+    }
+
     match polls.lock() {
         Err(_) => Json("Server error."),
         Ok(mut polls) => match polls.get_mut(&poll_name) {
@@ -221,6 +227,7 @@ fn fill_free_entry_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_respons
         l.make_ascii_lowercase();
         l
     })
+    .filter(|s| (*s).len()!=0)
     .collect::<Vec<String>>();
     answers.sort_unstable();
     answers.dedup();
@@ -237,8 +244,8 @@ fn fill_free_entry_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_respons
         return Json("There must be between 2 and 1000 unique answers.")
     }
 
-    if answers.iter().any(|a| (*a).len() < 3 || (*a).len() > 32 || !contains_only((*a).as_str(), LOWER_ALPHA_SPACE_CHARS)){
-        return Json("The length of each answer must be between 3 and 32, and only contain letters and spaces.")
+    if answers.iter().any(|a| (*a).len() < 3 || (*a).len() > 50 || !contains_only((*a).as_str(), LOWER_ALPHA_SPACE_CHARS)){
+        return Json("The length of each answer must be between 3 and 50, and only contain letters and spaces.")
     }
 
     match polls.lock() {

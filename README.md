@@ -4,24 +4,13 @@ Web application for finding common interests in sport.
 
 # Notes
 
- - Complete backend first. Then worry about frontend.
-    - Or not, for testing.
-
  - Empty questions field means poll with free entries.
 
  - Internally, all text is lower case.
 
- - When reporting results, show nothing for empty vector.
-
- - There might be overflow bugs. Also narrowing bugs. Fix them.
-
- - All validation should happen server side.
-
- - Clean form data when navbar is clicked.
+ - There might be integer overflow bugs. Also narrowing bugs. Fix them.
 
  - Add explanation of input fields somewhere.
-
- - Capitalize some names with strin operations on client side.
 
 # Frontend Design
 
