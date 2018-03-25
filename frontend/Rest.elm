@@ -49,13 +49,14 @@ get_poll model =
       |> Encode.string
       |> Http.jsonBody
 
-    return_gotten_poll_decoder = Decode.map2 GottenPoll
+    return_gotten_poll_decoder = Decode.map3 GottenPoll
       (Decode.field "title" Decode.string)
       (Decode.field "questions" (Decode.array Decode.string))
+      (Decode.field "error_string" Decode.string)
 
-    return_nullable_gotten_poll_decoder = Decode.nullable return_gotten_poll_decoder
+    --return_nullable_gotten_poll_decoder = Decode.nullable return_gotten_poll_decoder
   in
-    Http.send GetPollReturn (Http.post "/get_poll" (body) return_nullable_gotten_poll_decoder)
+    Http.send GetPollReturn (Http.post "/get_poll" (body) return_gotten_poll_decoder)
 
 
 fill_free_entry_poll: Model -> Cmd Msg
@@ -98,7 +99,7 @@ get_poll_results model =
       |> Encode.string
       |> Http.jsonBody
 
-    return_gotten_poll_decoder = Decode.map5 PollResult
+    return_poll_result_decoder = Decode.map5 PollResult
       (Decode.field "poll_title" Decode.string)
       (Decode.field "user_names" (Decode.list Decode.string))
       (Decode.field "all_yay" (Decode.list Decode.string))
@@ -106,4 +107,4 @@ get_poll_results model =
       (Decode.field "error_string" Decode.string)
 
   in
-    Http.send GetPollResultReturn (Http.post "/get_poll_results" (body) return_gotten_poll_decoder)
+    Http.send GetPollResultReturn (Http.post "/get_poll_results" (body) return_poll_result_decoder)

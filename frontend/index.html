@@ -9002,9 +9002,9 @@ var _user$project$Model$PollResult = F5(
 	function (a, b, c, d, e) {
 		return {title: a, user_names: b, all_yay: c, all_open: d, error: e};
 	});
-var _user$project$Model$GottenPoll = F2(
-	function (a, b) {
-		return {title: a, questions: b};
+var _user$project$Model$GottenPoll = F3(
+	function (a, b, c) {
+		return {title: a, questions: b, error: c};
 	});
 var _user$project$Model$Model = function (a) {
 	return function (b) {
@@ -9098,7 +9098,7 @@ var _user$project$Model$SetNavBar = function (a) {
 	return {ctor: 'SetNavBar', _0: a};
 };
 var _user$project$Rest$get_poll_results = function (model) {
-	var return_gotten_poll_decoder = A6(
+	var return_poll_result_decoder = A6(
 		_elm_lang$core$Json_Decode$map5,
 		_user$project$Model$PollResult,
 		A2(_elm_lang$core$Json_Decode$field, 'poll_title', _elm_lang$core$Json_Decode$string),
@@ -9120,7 +9120,7 @@ var _user$project$Rest$get_poll_results = function (model) {
 	return A2(
 		_elm_lang$http$Http$send,
 		_user$project$Model$GetPollResultReturn,
-		A3(_elm_lang$http$Http$post, '/get_poll_results', body, return_gotten_poll_decoder));
+		A3(_elm_lang$http$Http$post, '/get_poll_results', body, return_poll_result_decoder));
 };
 var _user$project$Rest$fill_poll = function (model) {
 	var return_string_decoder = _elm_lang$core$Json_Decode$string;
@@ -9192,21 +9192,21 @@ var _user$project$Rest$fill_free_entry_poll = function (model) {
 		A3(_elm_lang$http$Http$post, '/fill_free_entry_poll', body, return_string_decoder));
 };
 var _user$project$Rest$get_poll = function (model) {
-	var return_gotten_poll_decoder = A3(
-		_elm_lang$core$Json_Decode$map2,
+	var return_gotten_poll_decoder = A4(
+		_elm_lang$core$Json_Decode$map3,
 		_user$project$Model$GottenPoll,
 		A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
 		A2(
 			_elm_lang$core$Json_Decode$field,
 			'questions',
-			_elm_lang$core$Json_Decode$array(_elm_lang$core$Json_Decode$string)));
-	var return_nullable_gotten_poll_decoder = _elm_lang$core$Json_Decode$nullable(return_gotten_poll_decoder);
+			_elm_lang$core$Json_Decode$array(_elm_lang$core$Json_Decode$string)),
+		A2(_elm_lang$core$Json_Decode$field, 'error_string', _elm_lang$core$Json_Decode$string));
 	var body = _elm_lang$http$Http$jsonBody(
 		_elm_lang$core$Json_Encode$string(model.poll_name));
 	return A2(
 		_elm_lang$http$Http$send,
 		_user$project$Model$GetPollReturn,
-		A3(_elm_lang$http$Http$post, '/get_poll', body, return_nullable_gotten_poll_decoder));
+		A3(_elm_lang$http$Http$post, '/get_poll', body, return_gotten_poll_decoder));
 };
 var _user$project$Rest$start_poll = function (model) {
 	var return_string_decoder = _elm_lang$core$Json_Decode$string;
@@ -9416,32 +9416,32 @@ var _user$project$Update$update = F2(
 				};
 			case 'GetPollReturn':
 				if (_p1._0.ctor === 'Ok') {
-					if (_p1._0._0.ctor === 'Just') {
-						var _p6 = _p1._0._0._0;
-						return {
-							ctor: '_Tuple2',
-							_0: _elm_lang$core$Native_Utils.update(
-								model,
-								{
-									title: _p6.title,
-									gotten_questions: _p6.questions,
-									fixed_answers: A2(
-										_elm_lang$core$Array$repeat,
-										_elm_lang$core$Array$length(_p6.questions),
-										3),
-									error: ''
-								}),
-							_1: _elm_lang$core$Platform_Cmd$none
-						};
-					} else {
-						return {
-							ctor: '_Tuple2',
-							_0: _elm_lang$core$Native_Utils.update(
-								model,
-								{error: 'Error: A poll by that name does not exist (or there is a serious server error).'}),
-							_1: _elm_lang$core$Platform_Cmd$none
-						};
-					}
+					var _p6 = _p1._0._0;
+					return (_elm_lang$core$Native_Utils.cmp(
+						_elm_lang$core$String$length(_p6.error),
+						0) > 0) ? {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								error: A2(_elm_lang$core$Basics_ops['++'], 'Error: ', _p6.error)
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					} : {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								title: _p6.title,
+								gotten_questions: _p6.questions,
+								fixed_answers: A2(
+									_elm_lang$core$Array$repeat,
+									_elm_lang$core$Array$length(_p6.questions),
+									3),
+								error: ''
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
 				} else {
 					return {
 						ctor: '_Tuple2',
@@ -9734,7 +9734,7 @@ var _user$project$View$start_poll = function (model) {
 												_0: _elm_lang$html$Html_Attributes$type_('text'),
 												_1: {
 													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Name'),
+													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Token'),
 													_1: {
 														ctor: '::',
 														_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdatePollName),
@@ -9778,7 +9778,7 @@ var _user$project$View$start_poll = function (model) {
 													_0: _elm_lang$html$Html_Attributes$type_('text'),
 													_1: {
 														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$placeholder('Min. Responders'),
+														_0: _elm_lang$html$Html_Attributes$placeholder('#Responders'),
 														_1: {
 															ctor: '::',
 															_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateNumber),
@@ -10587,7 +10587,7 @@ var _user$project$View$fill_poll = function (model) {
 												_0: _elm_lang$html$Html_Attributes$type_('text'),
 												_1: {
 													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Name'),
+													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Token'),
 													_1: {
 														ctor: '::',
 														_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdatePollName),
@@ -11201,7 +11201,7 @@ var _user$project$View$see_poll = function (model) {
 												_0: _elm_lang$html$Html_Attributes$type_('text'),
 												_1: {
 													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Name'),
+													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Token'),
 													_1: {
 														ctor: '::',
 														_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdatePollName),

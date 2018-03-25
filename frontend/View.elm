@@ -51,8 +51,8 @@ start_poll model =
   div [class "container"]
   [ h1 [style [("margin", ".2cm")]] [text "Start Survey"]
   , div [class "col-md-12", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red"), ("border-radius", "4px")]]
-    [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Survey Name", onInput UpdatePollName, value model.poll_name] []]]
-    , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Min. Responders", onInput UpdateNumber, value (if model.number==0 then "" else toString model.number)] []]]
+    [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Survey Token", onInput UpdatePollName, value model.poll_name] []]]
+    , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "#Responders", onInput UpdateNumber, value (if model.number==0 then "" else toString model.number)] []]]
     , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Title", onInput UpdateTitle, value model.title] []]]
     , div [class "row"]
       [ div [class "btn-group col-md-4", style [("margin-top", ".2cm")]]
@@ -89,7 +89,7 @@ fill_poll model =
   [ h1 [style [("margin", ".2cm")]] [text "Fill Survey"]
   , div [class "col-md-12", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red"), ("border-radius", "4px")]] (
     if String.length model.title==0 then
-      [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Survey Name", onInput UpdatePollName, onEnter ClickedGetPoll, value model.poll_name] []]]
+      [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Survey Token", onInput UpdatePollName, onEnter ClickedGetPoll, value model.poll_name] []]]
       , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedGetPoll] [text "Get Survey"]]]
       , div [] [if String.length model.error>0 then p [style [("font-weight", "bold"), ("color", "red")]] [text model.error] else div [] []]
       ]
@@ -130,7 +130,7 @@ see_poll model =
   [ h1 [style [("margin", ".2cm")]] [text "See Survey"]
   , div [class "col-md-12", style [("margin", ".2cm"), ("padding", ".2cm"), ("border", ".5px solid red"), ("border-radius", "4px")]] (
     if String.length model.title==0 then
-      [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Survey Name", onInput UpdatePollName, onEnter ClickedGetPollResult, value model.poll_name] []]]
+      [ div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "Survey Token", onInput UpdatePollName, onEnter ClickedGetPollResult, value model.poll_name] []]]
       , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedGetPollResult] [text "Get Survey Results"]]]
       , div [] [if String.length model.error>0 then p [style [("font-weight", "bold"), ("color", "red")]] [text model.error] else div [] []]
       ]

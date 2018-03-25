@@ -50,8 +50,11 @@ update msg model =
       else ({model | navbar_state=NavMessage, message="Poll was added successfully. Its name is: "++model.poll_name}, Cmd.none)
     StartPollReturn (Err err) -> ({model | error="StartPollReturn Error: "++(http_err_to_string err)}, Cmd.none)
     ClickedGetPoll -> (model, get_poll model)
-    GetPollReturn (Ok (Just gotten_poll)) -> ({model | title=gotten_poll.title, gotten_questions=gotten_poll.questions, fixed_answers=Array.repeat (Array.length gotten_poll.questions) 3, error=""}, Cmd.none)
-    GetPollReturn (Ok Nothing) -> ({model | error="Error: A poll by that name does not exist (or there is a serious server error)."}, Cmd.none)
+    GetPollReturn (Ok gotten_poll) -> if String.length gotten_poll.error>0
+      then ({model | error="Error: "++gotten_poll.error}, Cmd.none)
+      else ({model | title=gotten_poll.title, gotten_questions=gotten_poll.questions, fixed_answers=Array.repeat (Array.length gotten_poll.questions) 3, error=""}, Cmd.none)
+    --GetPollReturn (Ok (Just gotten_poll)) -> ({model | title=gotten_poll.title, gotten_questions=gotten_poll.questions, fixed_answers=Array.repeat (Array.length gotten_poll.questions) 3, error=""}, Cmd.none)
+    --GetPollReturn (Ok Nothing) -> ({model | error="Error: A poll by that name does not exist (or there is a serious server error)."}, Cmd.none)
     GetPollReturn (Err err) -> ({model | error="GetPollReturn Error: "++(http_err_to_string err)}, Cmd.none)
     UpdateUserName user_name -> ({model | user_name=user_name}, Cmd.none)
     UpdateFreeAnswers free_answers -> ({model | free_answers=free_answers}, Cmd.none)

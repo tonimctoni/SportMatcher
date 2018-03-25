@@ -79,7 +79,7 @@ fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<Re
 
 
     if name.len() < 3 || name.len() > 32 || !contains_only(name.as_str(), LOWER_ALPHANUMERIC_CHARS){
-        return Json("Name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+        return Json("Survey token length must be between 3 and 32 characters long and only contain alphanumeric characters.")
     }
 
     if number < 2 || number > 20{
@@ -102,7 +102,7 @@ fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<Re
         Err(_) => Json("Server error."),
         Ok(mut polls) => {
             if polls.contains_key(&name){
-                Json("A poll with that name already exists.")
+                Json("A survey with that token already exists.")
             } else {
                 let poll=Poll{number: number, title: title, questions: questions, answers: vec![]};
                 polls.insert(name, poll);
@@ -139,18 +139,25 @@ fn has_user_answered_poll(polls: State<Mutex<HashMap<String, Poll>>>, user_and_p
 struct PollTitleAndQuestions {
     title: String,
     questions: Vec<String>,
+    error_string: String,
 }
 
 #[post("/get_poll", format = "application/json", data = "<name>")]
-fn get_poll(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<String>) -> Json<Option<PollTitleAndQuestions>>{
+fn get_poll(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<String>) -> Json<PollTitleAndQuestions>{
     let mut name=name.into_inner();
     name.make_ascii_lowercase();
 
     match polls.lock() {
-        Err(_) => Json(None),
+        Err(_) => Json(PollTitleAndQuestions{title: "".into(), questions: vec![], error_string: "Server error.".into()}),
         Ok(polls) => match polls.get(&name) {
-            None => Json(None),
-            Some(poll) => Json(Some(PollTitleAndQuestions{title: poll.title.clone(), questions: poll.questions.clone()})),
+            None => Json(PollTitleAndQuestions{title: "".into(), questions: vec![], error_string: "A survey with that token does not exists.".into()}),
+            Some(poll) => {
+                if poll.answers.len()>=poll.number as usize{
+                    Json(PollTitleAndQuestions{title: "".into(), questions: vec![], error_string: "This survey has already been filled by the required amount of users.".into()})
+                } else {
+                    Json(PollTitleAndQuestions{title: poll.title.clone(), questions: poll.questions.clone(), error_string: "".into()})
+                }
+            },
         },
     }
 }
@@ -174,7 +181,7 @@ fn fill_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<Pol
     }
 
     if poll_name.len() < 3 || poll_name.len() > 32 || !contains_only(poll_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
-        return Json("Poll name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+        return Json("Survey token length must be between 3 and 32 characters long and only contain alphanumeric characters.")
     }
 
     if answers.iter().all(|x| (*x)==0){
@@ -188,12 +195,14 @@ fn fill_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_response: Json<Pol
     match polls.lock() {
         Err(_) => Json("Server error."),
         Ok(mut polls) => match polls.get_mut(&poll_name) {
-            None => Json("A poll with that name does not exists."),
+            None => Json("A survey with that token does not exists."),
             Some(mut poll) => {
-                if poll.answers.iter().any(|a| (*a).0==user_name){
-                    Json("A user with that name has already answered the poll.")
+                if poll.answers.len()>=poll.number as usize{
+                    Json("This survey has already been filled by the required amount of users.")
+                } else if poll.answers.iter().any(|a| (*a).0==user_name){
+                    Json("A user with that name has already answered the survey.")
                 } else if poll.questions.len()!=answers.len(){
-                    Json("The number of poll questions and answers is different.")
+                    Json("The number of survey questions and answers is different.")
                 } else {
                     let answers=answers.into_iter()
                     .map(|a| if a==2 {"y".to_string()} else if a==1 {"o".to_string()} else {"n".to_string()})
@@ -237,7 +246,7 @@ fn fill_free_entry_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_respons
     }
 
     if poll_name.len() < 3 || poll_name.len() > 32 || !contains_only(poll_name.as_str(), LOWER_ALPHANUMERIC_CHARS){
-        return Json("Poll name length must be between 3 and 32 characters long and only contain alphanumeric characters.")
+        return Json("Survey token length must be between 3 and 32 characters long and only contain alphanumeric characters.")
     }
 
     if answers.len() < 2 || answers.len() > 1000{
@@ -251,14 +260,14 @@ fn fill_free_entry_poll(polls: State<Mutex<HashMap<String, Poll>>>, poll_respons
     match polls.lock() {
         Err(_) => Json("Server error."),
         Ok(mut polls) => match polls.get_mut(&poll_name) {
-            None => Json("A poll with that name does not exists."),
+            None => Json("A survey with that token does not exists."),
             Some(mut poll) => {
-                if poll.answers.iter().any(|a| (*a).0==user_name){
-                    Json("A user with that name has already answered the poll.")
-                // } else if poll.questions.len()!=answers.len(){
-                //     Json("The number of poll questions and answers is different.")
+                if poll.answers.len()>=poll.number as usize{
+                    Json("This survey has already been filled by the required amount of users.")
+                } else if poll.answers.iter().any(|a| (*a).0==user_name){
+                    Json("A user with that name has already answered the survey.")
                 } else if poll.questions.len()!=0{
-                    Json("This poll is not a free entry poll.")
+                    Json("This survey is not a free entry survey.")
                 } else {
                     poll.answers.push((user_name, answers));
                     Json("")
@@ -289,14 +298,14 @@ fn get_poll_results(polls: State<Mutex<HashMap<String, Poll>>>, name: Json<Strin
         },
         Ok(polls) => match polls.get(&name) {
             None => {
-                result_template.error_string="A poll with that name does not exists.".into();
+                result_template.error_string="A survey with that token does not exists.".into();
                 Json(result_template)
             },
             Some(poll) => {
                 result_template.poll_title=poll.title.clone();
                 result_template.user_names=poll.answers.iter().map(|x| (*x).0.clone()).collect::<Vec<String>>();
                 if poll.answers.len() < poll.number as usize || poll.answers.len() < 2{
-                    result_template.error_string=format!("This poll needs at least {} responses, but it only has {}.", poll.number, poll.answers.len());
+                    result_template.error_string=format!("This survey needs {} responses, but it only has {}.", poll.number, poll.answers.len());
                     Json(result_template)
                 }
                 else if poll.questions.is_empty(){

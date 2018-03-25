@@ -15,6 +15,7 @@ type alias PollResult =
 type alias GottenPoll =
   { title: String
   , questions: Array.Array String
+  , error: String
   }
 
 type NavBarState
@@ -36,7 +37,7 @@ type Msg
   | StartPollReturn (Result Http.Error String)
   --| PollNameExistsReturn (Result Http.Error Bool)
   | ClickedGetPoll
-  | GetPollReturn (Result Http.Error (Maybe GottenPoll))
+  | GetPollReturn (Result Http.Error GottenPoll)
   | UpdateFreeAnswers String
   | ClickedSubmitFreeAnswers
   | UpdateUserName String
