@@ -14,10 +14,6 @@ Web application for finding common interests in sport.
 
  - Add explanation of input fields somewhere.
 
- - Replace `poll` for `survey` and `name` for `survey token` in the frontend and strings sent to the frontend.
-
- - Make `number` not only the minimum amount of answers, but also the maximum. Do necesary renames for this.
-
 # Frontend Design
 
     - Navbar has 4 options:
