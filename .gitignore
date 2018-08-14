@@ -4,3 +4,4 @@ database.sqlite
 frontend/elm-stuff
 frontend/elm-package.json
 experiment
+backup
