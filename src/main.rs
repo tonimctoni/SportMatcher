@@ -5,134 +5,25 @@ extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
+#[cfg(test)]
+#[macro_use]
+extern crate serde_json;
 extern crate rand;
-use std::collections::HashMap;
+use std::sync::Mutex;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 use rocket::response::NamedFile;
-use rocket::State;
-use rocket_contrib::Json;
 
-use rand::rngs::{StdRng, EntropyRng};
-use rand::SeedableRng;
-use rand::RngCore;
 
-const LOWER_ALPHA_CHARS: &str = "abcdefghijklmnopqrstuvwxyz";
-const LOWER_ALPHA_SPACE_CHARS: &str = "abcdefghijklmnopqrstuvwxyz ";
-const LOWER_ALPHANUMERIC_CHARS: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
-const LOWER_ALPHANUMERIC_SYMBOLS_CHARS: &str = "abcdefghijklmnopqrstuvwxyz0123456789!? ,;.:-_()[]{}&%$";
+mod start_poll_fn;
+mod data;
+mod characters;
 
-fn contains_only(s: &str, chars: &str) -> bool{
-    s.chars().all(|c| chars.chars().any(|ac| ac==c))
-}
 
-struct Poll {
-    number: isize,
-    title: String,
-    questions: Vec<String>,
-    answers: Vec<(String, Vec<String>)>,
-}
 
-struct Data {
-    polls: HashMap<String, Poll>, // Poll id -> Poll
-    rng: StdRng,
-}
 
-impl Data {
-    fn new() -> Data{
-        Data{
-            polls: HashMap::new(),
-            rng: StdRng::from_rng(EntropyRng::new()).unwrap(),
-        }
-    }
 
-    fn add_poll(&mut self, poll: Poll) -> String{
-        let id=format!("{:X}", self.rng.next_u64());
-        self.polls.insert(id.clone(), poll); //Some polls might get overwritten, but that is unlikely, so it is ok.
-        id
-    }
-}
 
-#[get("/")]
-fn index() -> io::Result<NamedFile> {
-    NamedFile::open("frontend/index.html")
-}
-
-#[get("/<file..>")]
-fn files(file: PathBuf) -> Option<NamedFile> {
-    NamedFile::open(Path::new("resources/").join(file)).ok()
-}
-
-#[derive(Serialize, Deserialize)]
-struct StartPollInput {
-    poll_number: isize,
-    poll_title: String,
-    poll_questions: String,
-}
-
-#[derive(Serialize, Deserialize)]
-struct StartPollOutput {
-    poll_id: String,
-    error: &'static str,
-}
-
-impl StartPollOutput {
-    fn ok(poll_id: String) -> Json<StartPollOutput>{
-        Json(StartPollOutput{
-            poll_id: poll_id,
-            error: "",
-        })
-    }
-
-    fn err(error: &'static str) -> Json<StartPollOutput>{
-        Json(StartPollOutput{
-            poll_id: String::new(),
-            error: error,
-        })
-    }
-}
-
-#[post("/start_poll", format = "application/json", data = "<start_poll_input>")]
-fn start_poll(data: State<Mutex<Data>>, start_poll_input: Json<StartPollInput>) -> Json<StartPollOutput>{
-    let StartPollInput{poll_number, poll_title, poll_questions}=start_poll_input.into_inner();
-    let free_answers=poll_questions.len()==0;
-    let mut poll_questions=poll_questions
-    .lines()
-    .map(|l| {
-        let mut l=l.to_string();
-        l.make_ascii_lowercase();
-        l
-    })
-    .filter(|s| (*s).len()!=0)
-    .collect::<Vec<String>>();
-    poll_questions.sort_unstable();
-    poll_questions.dedup();
-
-    if poll_number < 2 || poll_number > 20{
-        return StartPollOutput::err("Number must be between 2 and 20.")
-    }
-
-    if poll_title.len() < 3 || poll_title.len() > 32 || !contains_only(poll_title.as_str(), LOWER_ALPHANUMERIC_SYMBOLS_CHARS){
-        return StartPollOutput::err("Title length must be between 3 and 32 characters long and only contain alphanumeric or these `!? ,;.:-_()[]{}&%$` characters.")
-    }
-
-    if !free_answers && (poll_questions.len() < 3 || poll_questions.len() > 1000){
-        return StartPollOutput::err("There must be between 3 and 1000 unique questions.")
-    }
-
-    if poll_questions.iter().any(|q| (*q).len() < 3 || (*q).len() > 50 || !contains_only((*q).as_str(), LOWER_ALPHA_SPACE_CHARS)){
-        return StartPollOutput::err("The length of each question must be between 3 and 50, and only contain letters and spaces.")
-    }
-
-    match data.lock() {
-        Err(_) => StartPollOutput::err("Server error."),
-        Ok(mut data) => {
-            let poll=Poll{number: poll_number, title: poll_title, questions: poll_questions, answers: vec![]};
-            StartPollOutput::ok(data.add_poll(poll))
-        },
-    }
-}
 
 // #[post("/start_poll", format = "application/json", data = "<received_poll>")]
 // fn start_poll(polls: State<Mutex<HashMap<String, Poll>>>, received_poll: Json<ReceivedPoll>) -> Json<&str>{
@@ -427,8 +318,19 @@ fn start_poll(data: State<Mutex<Data>>, start_poll_input: Json<StartPollInput>) 
 //     }
 // }
 
+#[get("/")]
+fn index() -> io::Result<NamedFile> {
+    NamedFile::open("frontend/index.html")
+}
+
+#[get("/<file..>")]
+fn files(file: PathBuf) -> Option<NamedFile> {
+    NamedFile::open(Path::new("resources/").join(file)).ok()
+}
+
 fn main() {
-    let data=Data::new();
+    use start_poll_fn::*;
+    let data=data::Data::new();
 
     rocket::ignite()
     .manage(Mutex::new(data))
