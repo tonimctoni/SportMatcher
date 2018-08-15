@@ -6116,6 +6116,128 @@ var _elm_lang$core$Json_Decode$int = _elm_lang$core$Native_Json.decodePrimitive(
 var _elm_lang$core$Json_Decode$bool = _elm_lang$core$Native_Json.decodePrimitive('bool');
 var _elm_lang$core$Json_Decode$string = _elm_lang$core$Native_Json.decodePrimitive('string');
 var _elm_lang$core$Json_Decode$Decoder = {ctor: 'Decoder'};
+//import Maybe, Native.List //
+
+var _elm_lang$core$Native_Regex = function() {
+
+function escape(str)
+{
+	return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+function caseInsensitive(re)
+{
+	return new RegExp(re.source, 'gi');
+}
+function regex(raw)
+{
+	return new RegExp(raw, 'g');
+}
+
+function contains(re, string)
+{
+	return string.match(re) !== null;
+}
+
+function find(n, re, str)
+{
+	n = n.ctor === 'All' ? Infinity : n._0;
+	var out = [];
+	var number = 0;
+	var string = str;
+	var lastIndex = re.lastIndex;
+	var prevLastIndex = -1;
+	var result;
+	while (number++ < n && (result = re.exec(string)))
+	{
+		if (prevLastIndex === re.lastIndex) break;
+		var i = result.length - 1;
+		var subs = new Array(i);
+		while (i > 0)
+		{
+			var submatch = result[i];
+			subs[--i] = submatch === undefined
+				? _elm_lang$core$Maybe$Nothing
+				: _elm_lang$core$Maybe$Just(submatch);
+		}
+		out.push({
+			match: result[0],
+			submatches: _elm_lang$core$Native_List.fromArray(subs),
+			index: result.index,
+			number: number
+		});
+		prevLastIndex = re.lastIndex;
+	}
+	re.lastIndex = lastIndex;
+	return _elm_lang$core$Native_List.fromArray(out);
+}
+
+function replace(n, re, replacer, string)
+{
+	n = n.ctor === 'All' ? Infinity : n._0;
+	var count = 0;
+	function jsReplacer(match)
+	{
+		if (count++ >= n)
+		{
+			return match;
+		}
+		var i = arguments.length - 3;
+		var submatches = new Array(i);
+		while (i > 0)
+		{
+			var submatch = arguments[i];
+			submatches[--i] = submatch === undefined
+				? _elm_lang$core$Maybe$Nothing
+				: _elm_lang$core$Maybe$Just(submatch);
+		}
+		return replacer({
+			match: match,
+			submatches: _elm_lang$core$Native_List.fromArray(submatches),
+			index: arguments[arguments.length - 2],
+			number: count
+		});
+	}
+	return string.replace(re, jsReplacer);
+}
+
+function split(n, re, str)
+{
+	n = n.ctor === 'All' ? Infinity : n._0;
+	if (n === Infinity)
+	{
+		return _elm_lang$core$Native_List.fromArray(str.split(re));
+	}
+	var string = str;
+	var result;
+	var out = [];
+	var start = re.lastIndex;
+	var restoreLastIndex = re.lastIndex;
+	while (n--)
+	{
+		if (!(result = re.exec(string))) break;
+		out.push(string.slice(start, result.index));
+		start = re.lastIndex;
+	}
+	out.push(string.slice(start));
+	re.lastIndex = restoreLastIndex;
+	return _elm_lang$core$Native_List.fromArray(out);
+}
+
+return {
+	regex: regex,
+	caseInsensitive: caseInsensitive,
+	escape: escape,
+
+	contains: F2(contains),
+	find: F3(find),
+	replace: F4(replace),
+	split: F3(split)
+};
+
+}();
+var _elm_lang$core$Process$kill = _elm_lang$core$Native_Scheduler.kill;
+var _elm_lang$core$Process$sleep = _elm_lang$core$Native_Scheduler.sleep;
+var _elm_lang$core$Process$spawn = _elm_lang$core$Native_Scheduler.spawn;
 var _elm_lang$core$Tuple$mapSecond = F2(
 	function (func, _p0) {
 		var _p1 = _p0;
@@ -6142,6 +6264,206 @@ var _elm_lang$core$Tuple$first = function (_p6) {
 	var _p7 = _p6;
 	return _p7._0;
 };
+var _elm_lang$core$Regex$split = _elm_lang$core$Native_Regex.split;
+var _elm_lang$core$Regex$replace = _elm_lang$core$Native_Regex.replace;
+var _elm_lang$core$Regex$find = _elm_lang$core$Native_Regex.find;
+var _elm_lang$core$Regex$contains = _elm_lang$core$Native_Regex.contains;
+var _elm_lang$core$Regex$caseInsensitive = _elm_lang$core$Native_Regex.caseInsensitive;
+var _elm_lang$core$Regex$regex = _elm_lang$core$Native_Regex.regex;
+var _elm_lang$core$Regex$escape = _elm_lang$core$Native_Regex.escape;
+var _elm_lang$core$Regex$Match = F4(
+	function (a, b, c, d) {
+		return {match: a, submatches: b, index: c, number: d};
+	});
+var _elm_lang$core$Regex$Regex = {ctor: 'Regex'};
+var _elm_lang$core$Regex$AtMost = function (a) {
+	return {ctor: 'AtMost', _0: a};
+};
+var _elm_lang$core$Regex$All = {ctor: 'All'};
+var _elm_lang$dom$Native_Dom = function() {
+
+var fakeNode = {
+	addEventListener: function() {},
+	removeEventListener: function() {}
+};
+
+var onDocument = on(typeof document !== 'undefined' ? document : fakeNode);
+var onWindow = on(typeof window !== 'undefined' ? window : fakeNode);
+
+function on(node)
+{
+	return function(eventName, decoder, toTask)
+	{
+		return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+
+			function performTask(event)
+			{
+				var result = A2(_elm_lang$core$Json_Decode$decodeValue, decoder, event);
+				if (result.ctor === 'Ok')
+				{
+					_elm_lang$core$Native_Scheduler.rawSpawn(toTask(result._0));
+				}
+			}
+
+			node.addEventListener(eventName, performTask);
+
+			return function()
+			{
+				node.removeEventListener(eventName, performTask);
+			};
+		});
+	};
+}
+
+var rAF = typeof requestAnimationFrame !== 'undefined'
+	? requestAnimationFrame
+	: function(callback) { callback(); };
+
+function withNode(id, doStuff)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		rAF(function()
+		{
+			var node = document.getElementById(id);
+			if (node === null)
+			{
+				callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'NotFound', _0: id }));
+				return;
+			}
+			callback(_elm_lang$core$Native_Scheduler.succeed(doStuff(node)));
+		});
+	});
+}
+
+
+// FOCUS
+
+function focus(id)
+{
+	return withNode(id, function(node) {
+		node.focus();
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function blur(id)
+{
+	return withNode(id, function(node) {
+		node.blur();
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+
+// SCROLLING
+
+function getScrollTop(id)
+{
+	return withNode(id, function(node) {
+		return node.scrollTop;
+	});
+}
+
+function setScrollTop(id, desiredScrollTop)
+{
+	return withNode(id, function(node) {
+		node.scrollTop = desiredScrollTop;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function toBottom(id)
+{
+	return withNode(id, function(node) {
+		node.scrollTop = node.scrollHeight;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function getScrollLeft(id)
+{
+	return withNode(id, function(node) {
+		return node.scrollLeft;
+	});
+}
+
+function setScrollLeft(id, desiredScrollLeft)
+{
+	return withNode(id, function(node) {
+		node.scrollLeft = desiredScrollLeft;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function toRight(id)
+{
+	return withNode(id, function(node) {
+		node.scrollLeft = node.scrollWidth;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+
+// SIZE
+
+function width(options, id)
+{
+	return withNode(id, function(node) {
+		switch (options.ctor)
+		{
+			case 'Content':
+				return node.scrollWidth;
+			case 'VisibleContent':
+				return node.clientWidth;
+			case 'VisibleContentWithBorders':
+				return node.offsetWidth;
+			case 'VisibleContentWithBordersAndMargins':
+				var rect = node.getBoundingClientRect();
+				return rect.right - rect.left;
+		}
+	});
+}
+
+function height(options, id)
+{
+	return withNode(id, function(node) {
+		switch (options.ctor)
+		{
+			case 'Content':
+				return node.scrollHeight;
+			case 'VisibleContent':
+				return node.clientHeight;
+			case 'VisibleContentWithBorders':
+				return node.offsetHeight;
+			case 'VisibleContentWithBordersAndMargins':
+				var rect = node.getBoundingClientRect();
+				return rect.bottom - rect.top;
+		}
+	});
+}
+
+return {
+	onDocument: F3(onDocument),
+	onWindow: F3(onWindow),
+
+	focus: focus,
+	blur: blur,
+
+	getScrollTop: getScrollTop,
+	setScrollTop: F2(setScrollTop),
+	getScrollLeft: getScrollLeft,
+	setScrollLeft: F2(setScrollLeft),
+	toBottom: toBottom,
+	toRight: toRight,
+
+	height: F2(height),
+	width: F2(width)
+};
+
+}();
+var _elm_lang$dom$Dom_LowLevel$onWindow = _elm_lang$dom$Native_Dom.onWindow;
+var _elm_lang$dom$Dom_LowLevel$onDocument = _elm_lang$dom$Native_Dom.onDocument;
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrap;
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrapWithFlags;
 
@@ -8998,15 +9320,187 @@ var _elm_lang$http$Http$StringPart = F2(
 		return {ctor: 'StringPart', _0: a, _1: b};
 	});
 var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
-var _user$project$Model$PollResult = F5(
-	function (a, b, c, d, e) {
-		return {title: a, user_names: b, all_yay: c, all_open: d, error: e};
+var _elm_lang$navigation$Native_Navigation = function() {
+
+
+// FAKE NAVIGATION
+
+function go(n)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		if (n !== 0)
+		{
+			history.go(n);
+		}
+		callback(_elm_lang$core$Native_Scheduler.succeed(_elm_lang$core$Native_Utils.Tuple0));
 	});
-var _user$project$Model$GottenPoll = F3(
-	function (a, b, c) {
-		return {title: a, questions: b, error: c};
+}
+
+function pushState(url)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		history.pushState({}, '', url);
+		callback(_elm_lang$core$Native_Scheduler.succeed(getLocation()));
 	});
-var _user$project$Model$Model = function (a) {
+}
+
+function replaceState(url)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		history.replaceState({}, '', url);
+		callback(_elm_lang$core$Native_Scheduler.succeed(getLocation()));
+	});
+}
+
+
+// REAL NAVIGATION
+
+function reloadPage(skipCache)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		document.location.reload(skipCache);
+		callback(_elm_lang$core$Native_Scheduler.succeed(_elm_lang$core$Native_Utils.Tuple0));
+	});
+}
+
+function setLocation(url)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		try
+		{
+			window.location = url;
+		}
+		catch(err)
+		{
+			// Only Firefox can throw a NS_ERROR_MALFORMED_URI exception here.
+			// Other browsers reload the page, so let's be consistent about that.
+			document.location.reload(false);
+		}
+		callback(_elm_lang$core$Native_Scheduler.succeed(_elm_lang$core$Native_Utils.Tuple0));
+	});
+}
+
+
+// GET LOCATION
+
+function getLocation()
+{
+	var location = document.location;
+
+	return {
+		href: location.href,
+		host: location.host,
+		hostname: location.hostname,
+		protocol: location.protocol,
+		origin: location.origin,
+		port_: location.port,
+		pathname: location.pathname,
+		search: location.search,
+		hash: location.hash,
+		username: location.username,
+		password: location.password
+	};
+}
+
+
+// DETECT IE11 PROBLEMS
+
+function isInternetExplorer11()
+{
+	return window.navigator.userAgent.indexOf('Trident') !== -1;
+}
+
+
+return {
+	go: go,
+	setLocation: setLocation,
+	reloadPage: reloadPage,
+	pushState: pushState,
+	replaceState: replaceState,
+	getLocation: getLocation,
+	isInternetExplorer11: isInternetExplorer11
+};
+
+}();
+var _elm_lang$navigation$Navigation$replaceState = _elm_lang$navigation$Native_Navigation.replaceState;
+var _elm_lang$navigation$Navigation$pushState = _elm_lang$navigation$Native_Navigation.pushState;
+var _elm_lang$navigation$Navigation$go = _elm_lang$navigation$Native_Navigation.go;
+var _elm_lang$navigation$Navigation$reloadPage = _elm_lang$navigation$Native_Navigation.reloadPage;
+var _elm_lang$navigation$Navigation$setLocation = _elm_lang$navigation$Native_Navigation.setLocation;
+var _elm_lang$navigation$Navigation_ops = _elm_lang$navigation$Navigation_ops || {};
+_elm_lang$navigation$Navigation_ops['&>'] = F2(
+	function (task1, task2) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (_p0) {
+				return task2;
+			},
+			task1);
+	});
+var _elm_lang$navigation$Navigation$notify = F3(
+	function (router, subs, location) {
+		var send = function (_p1) {
+			var _p2 = _p1;
+			return A2(
+				_elm_lang$core$Platform$sendToApp,
+				router,
+				_p2._0(location));
+		};
+		return A2(
+			_elm_lang$navigation$Navigation_ops['&>'],
+			_elm_lang$core$Task$sequence(
+				A2(_elm_lang$core$List$map, send, subs)),
+			_elm_lang$core$Task$succeed(
+				{ctor: '_Tuple0'}));
+	});
+var _elm_lang$navigation$Navigation$cmdHelp = F3(
+	function (router, subs, cmd) {
+		var _p3 = cmd;
+		switch (_p3.ctor) {
+			case 'Jump':
+				return _elm_lang$navigation$Navigation$go(_p3._0);
+			case 'New':
+				return A2(
+					_elm_lang$core$Task$andThen,
+					A2(_elm_lang$navigation$Navigation$notify, router, subs),
+					_elm_lang$navigation$Navigation$pushState(_p3._0));
+			case 'Modify':
+				return A2(
+					_elm_lang$core$Task$andThen,
+					A2(_elm_lang$navigation$Navigation$notify, router, subs),
+					_elm_lang$navigation$Navigation$replaceState(_p3._0));
+			case 'Visit':
+				return _elm_lang$navigation$Navigation$setLocation(_p3._0);
+			default:
+				return _elm_lang$navigation$Navigation$reloadPage(_p3._0);
+		}
+	});
+var _elm_lang$navigation$Navigation$killPopWatcher = function (popWatcher) {
+	var _p4 = popWatcher;
+	if (_p4.ctor === 'Normal') {
+		return _elm_lang$core$Process$kill(_p4._0);
+	} else {
+		return A2(
+			_elm_lang$navigation$Navigation_ops['&>'],
+			_elm_lang$core$Process$kill(_p4._0),
+			_elm_lang$core$Process$kill(_p4._1));
+	}
+};
+var _elm_lang$navigation$Navigation$onSelfMsg = F3(
+	function (router, location, state) {
+		return A2(
+			_elm_lang$navigation$Navigation_ops['&>'],
+			A3(_elm_lang$navigation$Navigation$notify, router, state.subs, location),
+			_elm_lang$core$Task$succeed(state));
+	});
+var _elm_lang$navigation$Navigation$subscription = _elm_lang$core$Native_Platform.leaf('Navigation');
+var _elm_lang$navigation$Navigation$command = _elm_lang$core$Native_Platform.leaf('Navigation');
+var _elm_lang$navigation$Navigation$Location = function (a) {
 	return function (b) {
 		return function (c) {
 			return function (d) {
@@ -9017,15 +9511,7 @@ var _user$project$Model$Model = function (a) {
 								return function (i) {
 									return function (j) {
 										return function (k) {
-											return function (l) {
-												return function (m) {
-													return function (n) {
-														return function (o) {
-															return {navbar_state: a, poll_name: b, number: c, title: d, qtype_is_free: e, questions: f, error: g, message: h, gotten_questions: i, free_answers: j, user_name: k, fixed_answers: l, user_names: m, all_yay: n, all_open: o};
-														};
-													};
-												};
-											};
+											return {href: a, host: b, hostname: c, protocol: d, origin: e, port_: f, pathname: g, search: h, hash: i, username: j, password: k};
 										};
 									};
 								};
@@ -9037,116 +9523,297 @@ var _user$project$Model$Model = function (a) {
 		};
 	};
 };
-var _user$project$Model$NavMessage = {ctor: 'NavMessage'};
-var _user$project$Model$NavSeePoll = {ctor: 'NavSeePoll'};
-var _user$project$Model$NavFillPoll = {ctor: 'NavFillPoll'};
-var _user$project$Model$NavStartPoll = {ctor: 'NavStartPoll'};
-var _user$project$Model$NavGreeting = {ctor: 'NavGreeting'};
-var _user$project$Model$init = {
-	ctor: '_Tuple2',
-	_0: _user$project$Model$Model(_user$project$Model$NavGreeting)('')(0)('')(false)('')('')('')(_elm_lang$core$Array$empty)('')('')(_elm_lang$core$Array$empty)(
-		{ctor: '[]'})(
-		{ctor: '[]'})(
-		{ctor: '[]'}),
-	_1: _elm_lang$core$Platform_Cmd$none
-};
-var _user$project$Model$GetPollResultReturn = function (a) {
-	return {ctor: 'GetPollResultReturn', _0: a};
-};
-var _user$project$Model$ClickedGetPollResult = {ctor: 'ClickedGetPollResult'};
-var _user$project$Model$FillFixedPollReturn = function (a) {
-	return {ctor: 'FillFixedPollReturn', _0: a};
-};
-var _user$project$Model$SetFixedAnswer = F2(
+var _elm_lang$navigation$Navigation$State = F2(
 	function (a, b) {
-		return {ctor: 'SetFixedAnswer', _0: a, _1: b};
+		return {subs: a, popWatcher: b};
 	});
-var _user$project$Model$ClickedSubmitFixedAnswers = {ctor: 'ClickedSubmitFixedAnswers'};
-var _user$project$Model$FillFreeEntryPollReturn = function (a) {
-	return {ctor: 'FillFreeEntryPollReturn', _0: a};
+var _elm_lang$navigation$Navigation$init = _elm_lang$core$Task$succeed(
+	A2(
+		_elm_lang$navigation$Navigation$State,
+		{ctor: '[]'},
+		_elm_lang$core$Maybe$Nothing));
+var _elm_lang$navigation$Navigation$Reload = function (a) {
+	return {ctor: 'Reload', _0: a};
 };
-var _user$project$Model$UpdateUserName = function (a) {
-	return {ctor: 'UpdateUserName', _0: a};
+var _elm_lang$navigation$Navigation$reload = _elm_lang$navigation$Navigation$command(
+	_elm_lang$navigation$Navigation$Reload(false));
+var _elm_lang$navigation$Navigation$reloadAndSkipCache = _elm_lang$navigation$Navigation$command(
+	_elm_lang$navigation$Navigation$Reload(true));
+var _elm_lang$navigation$Navigation$Visit = function (a) {
+	return {ctor: 'Visit', _0: a};
 };
-var _user$project$Model$ClickedSubmitFreeAnswers = {ctor: 'ClickedSubmitFreeAnswers'};
-var _user$project$Model$UpdateFreeAnswers = function (a) {
-	return {ctor: 'UpdateFreeAnswers', _0: a};
+var _elm_lang$navigation$Navigation$load = function (url) {
+	return _elm_lang$navigation$Navigation$command(
+		_elm_lang$navigation$Navigation$Visit(url));
 };
-var _user$project$Model$GetPollReturn = function (a) {
-	return {ctor: 'GetPollReturn', _0: a};
+var _elm_lang$navigation$Navigation$Modify = function (a) {
+	return {ctor: 'Modify', _0: a};
 };
-var _user$project$Model$ClickedGetPoll = {ctor: 'ClickedGetPoll'};
-var _user$project$Model$StartPollReturn = function (a) {
-	return {ctor: 'StartPollReturn', _0: a};
+var _elm_lang$navigation$Navigation$modifyUrl = function (url) {
+	return _elm_lang$navigation$Navigation$command(
+		_elm_lang$navigation$Navigation$Modify(url));
+};
+var _elm_lang$navigation$Navigation$New = function (a) {
+	return {ctor: 'New', _0: a};
+};
+var _elm_lang$navigation$Navigation$newUrl = function (url) {
+	return _elm_lang$navigation$Navigation$command(
+		_elm_lang$navigation$Navigation$New(url));
+};
+var _elm_lang$navigation$Navigation$Jump = function (a) {
+	return {ctor: 'Jump', _0: a};
+};
+var _elm_lang$navigation$Navigation$back = function (n) {
+	return _elm_lang$navigation$Navigation$command(
+		_elm_lang$navigation$Navigation$Jump(0 - n));
+};
+var _elm_lang$navigation$Navigation$forward = function (n) {
+	return _elm_lang$navigation$Navigation$command(
+		_elm_lang$navigation$Navigation$Jump(n));
+};
+var _elm_lang$navigation$Navigation$cmdMap = F2(
+	function (_p5, myCmd) {
+		var _p6 = myCmd;
+		switch (_p6.ctor) {
+			case 'Jump':
+				return _elm_lang$navigation$Navigation$Jump(_p6._0);
+			case 'New':
+				return _elm_lang$navigation$Navigation$New(_p6._0);
+			case 'Modify':
+				return _elm_lang$navigation$Navigation$Modify(_p6._0);
+			case 'Visit':
+				return _elm_lang$navigation$Navigation$Visit(_p6._0);
+			default:
+				return _elm_lang$navigation$Navigation$Reload(_p6._0);
+		}
+	});
+var _elm_lang$navigation$Navigation$Monitor = function (a) {
+	return {ctor: 'Monitor', _0: a};
+};
+var _elm_lang$navigation$Navigation$program = F2(
+	function (locationToMessage, stuff) {
+		var init = stuff.init(
+			_elm_lang$navigation$Native_Navigation.getLocation(
+				{ctor: '_Tuple0'}));
+		var subs = function (model) {
+			return _elm_lang$core$Platform_Sub$batch(
+				{
+					ctor: '::',
+					_0: _elm_lang$navigation$Navigation$subscription(
+						_elm_lang$navigation$Navigation$Monitor(locationToMessage)),
+					_1: {
+						ctor: '::',
+						_0: stuff.subscriptions(model),
+						_1: {ctor: '[]'}
+					}
+				});
+		};
+		return _elm_lang$html$Html$program(
+			{init: init, view: stuff.view, update: stuff.update, subscriptions: subs});
+	});
+var _elm_lang$navigation$Navigation$programWithFlags = F2(
+	function (locationToMessage, stuff) {
+		var init = function (flags) {
+			return A2(
+				stuff.init,
+				flags,
+				_elm_lang$navigation$Native_Navigation.getLocation(
+					{ctor: '_Tuple0'}));
+		};
+		var subs = function (model) {
+			return _elm_lang$core$Platform_Sub$batch(
+				{
+					ctor: '::',
+					_0: _elm_lang$navigation$Navigation$subscription(
+						_elm_lang$navigation$Navigation$Monitor(locationToMessage)),
+					_1: {
+						ctor: '::',
+						_0: stuff.subscriptions(model),
+						_1: {ctor: '[]'}
+					}
+				});
+		};
+		return _elm_lang$html$Html$programWithFlags(
+			{init: init, view: stuff.view, update: stuff.update, subscriptions: subs});
+	});
+var _elm_lang$navigation$Navigation$subMap = F2(
+	function (func, _p7) {
+		var _p8 = _p7;
+		return _elm_lang$navigation$Navigation$Monitor(
+			function (_p9) {
+				return func(
+					_p8._0(_p9));
+			});
+	});
+var _elm_lang$navigation$Navigation$InternetExplorer = F2(
+	function (a, b) {
+		return {ctor: 'InternetExplorer', _0: a, _1: b};
+	});
+var _elm_lang$navigation$Navigation$Normal = function (a) {
+	return {ctor: 'Normal', _0: a};
+};
+var _elm_lang$navigation$Navigation$spawnPopWatcher = function (router) {
+	var reportLocation = function (_p10) {
+		return A2(
+			_elm_lang$core$Platform$sendToSelf,
+			router,
+			_elm_lang$navigation$Native_Navigation.getLocation(
+				{ctor: '_Tuple0'}));
+	};
+	return _elm_lang$navigation$Native_Navigation.isInternetExplorer11(
+		{ctor: '_Tuple0'}) ? A3(
+		_elm_lang$core$Task$map2,
+		_elm_lang$navigation$Navigation$InternetExplorer,
+		_elm_lang$core$Process$spawn(
+			A3(_elm_lang$dom$Dom_LowLevel$onWindow, 'popstate', _elm_lang$core$Json_Decode$value, reportLocation)),
+		_elm_lang$core$Process$spawn(
+			A3(_elm_lang$dom$Dom_LowLevel$onWindow, 'hashchange', _elm_lang$core$Json_Decode$value, reportLocation))) : A2(
+		_elm_lang$core$Task$map,
+		_elm_lang$navigation$Navigation$Normal,
+		_elm_lang$core$Process$spawn(
+			A3(_elm_lang$dom$Dom_LowLevel$onWindow, 'popstate', _elm_lang$core$Json_Decode$value, reportLocation)));
+};
+var _elm_lang$navigation$Navigation$onEffects = F4(
+	function (router, cmds, subs, _p11) {
+		var _p12 = _p11;
+		var _p15 = _p12.popWatcher;
+		var stepState = function () {
+			var _p13 = {ctor: '_Tuple2', _0: subs, _1: _p15};
+			_v6_2:
+			do {
+				if (_p13._0.ctor === '[]') {
+					if (_p13._1.ctor === 'Just') {
+						return A2(
+							_elm_lang$navigation$Navigation_ops['&>'],
+							_elm_lang$navigation$Navigation$killPopWatcher(_p13._1._0),
+							_elm_lang$core$Task$succeed(
+								A2(_elm_lang$navigation$Navigation$State, subs, _elm_lang$core$Maybe$Nothing)));
+					} else {
+						break _v6_2;
+					}
+				} else {
+					if (_p13._1.ctor === 'Nothing') {
+						return A2(
+							_elm_lang$core$Task$map,
+							function (_p14) {
+								return A2(
+									_elm_lang$navigation$Navigation$State,
+									subs,
+									_elm_lang$core$Maybe$Just(_p14));
+							},
+							_elm_lang$navigation$Navigation$spawnPopWatcher(router));
+					} else {
+						break _v6_2;
+					}
+				}
+			} while(false);
+			return _elm_lang$core$Task$succeed(
+				A2(_elm_lang$navigation$Navigation$State, subs, _p15));
+		}();
+		return A2(
+			_elm_lang$navigation$Navigation_ops['&>'],
+			_elm_lang$core$Task$sequence(
+				A2(
+					_elm_lang$core$List$map,
+					A2(_elm_lang$navigation$Navigation$cmdHelp, router, subs),
+					cmds)),
+			stepState);
+	});
+_elm_lang$core$Native_Platform.effectManagers['Navigation'] = {pkg: 'elm-lang/navigation', init: _elm_lang$navigation$Navigation$init, onEffects: _elm_lang$navigation$Navigation$onEffects, onSelfMsg: _elm_lang$navigation$Navigation$onSelfMsg, tag: 'fx', cmdMap: _elm_lang$navigation$Navigation$cmdMap, subMap: _elm_lang$navigation$Navigation$subMap};
+var _user$project$Model$get_var_value = F2(
+	function (search, varname) {
+		var regex = _elm_lang$core$Regex$regex(
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'',
+				A2(_elm_lang$core$Basics_ops['++'], varname, '=(\\w+)')));
+		var matches = A3(
+			_elm_lang$core$Regex$find,
+			_elm_lang$core$Regex$AtMost(1),
+			regex,
+			search);
+		return A2(
+			_elm_lang$core$Maybe$andThen,
+			function (submatch) {
+				return submatch;
+			},
+			A2(
+				_elm_lang$core$Maybe$andThen,
+				function (match) {
+					return _elm_lang$core$List$head(match.submatches);
+				},
+				_elm_lang$core$List$head(matches)));
+	});
+var _user$project$Model$StartPollOutput = F2(
+	function (a, b) {
+		return {poll_id: a, error: b};
+	});
+var _user$project$Model$Model = F7(
+	function (a, b, c, d, e, f, g) {
+		return {page: a, error: b, poll_id: c, start_poll_form_title: d, start_poll_form_number: e, start_poll_form_type_is_free: f, start_poll_form_questions: g};
+	});
+var _user$project$Model$ShowPollLinkPage = {ctor: 'ShowPollLinkPage'};
+var _user$project$Model$StartPollPage = {ctor: 'StartPollPage'};
+var _user$project$Model$init = function (location) {
+	var $var = A2(
+		_elm_lang$core$Maybe$withDefault,
+		'',
+		A2(_user$project$Model$get_var_value, location.search, 'var'));
+	return {
+		ctor: '_Tuple2',
+		_0: A7(_user$project$Model$Model, _user$project$Model$StartPollPage, '', '', '', 0, false, ''),
+		_1: _elm_lang$core$Platform_Cmd$none
+	};
+};
+var _user$project$Model$StartPollResult = function (a) {
+	return {ctor: 'StartPollResult', _0: a};
 };
 var _user$project$Model$ClickedSubmitPoll = {ctor: 'ClickedSubmitPoll'};
 var _user$project$Model$UpdateQuestions = function (a) {
 	return {ctor: 'UpdateQuestions', _0: a};
 };
-var _user$project$Model$ClickedFixed = {ctor: 'ClickedFixed'};
 var _user$project$Model$ClickedFree = {ctor: 'ClickedFree'};
+var _user$project$Model$ClickedFixed = {ctor: 'ClickedFixed'};
 var _user$project$Model$UpdateNumber = function (a) {
 	return {ctor: 'UpdateNumber', _0: a};
 };
 var _user$project$Model$UpdateTitle = function (a) {
 	return {ctor: 'UpdateTitle', _0: a};
 };
-var _user$project$Model$UpdatePollName = function (a) {
-	return {ctor: 'UpdatePollName', _0: a};
+var _user$project$Model$UrlChange = function (a) {
+	return {ctor: 'UrlChange', _0: a};
 };
-var _user$project$Model$SetNavBar = function (a) {
-	return {ctor: 'SetNavBar', _0: a};
-};
-var _user$project$Rest$get_poll_results = function (model) {
-	var return_poll_result_decoder = A6(
-		_elm_lang$core$Json_Decode$map5,
-		_user$project$Model$PollResult,
-		A2(_elm_lang$core$Json_Decode$field, 'poll_title', _elm_lang$core$Json_Decode$string),
-		A2(
-			_elm_lang$core$Json_Decode$field,
-			'user_names',
-			_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)),
-		A2(
-			_elm_lang$core$Json_Decode$field,
-			'all_yay',
-			_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)),
-		A2(
-			_elm_lang$core$Json_Decode$field,
-			'all_open',
-			_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)),
-		A2(_elm_lang$core$Json_Decode$field, 'error_string', _elm_lang$core$Json_Decode$string));
-	var body = _elm_lang$http$Http$jsonBody(
-		_elm_lang$core$Json_Encode$string(model.poll_name));
-	return A2(
-		_elm_lang$http$Http$send,
-		_user$project$Model$GetPollResultReturn,
-		A3(_elm_lang$http$Http$post, '/get_poll_results', body, return_poll_result_decoder));
-};
-var _user$project$Rest$fill_poll = function (model) {
-	var return_string_decoder = _elm_lang$core$Json_Decode$string;
+var _user$project$Rest$send_start_poll = function (model) {
+	var decoder = A3(
+		_elm_lang$core$Json_Decode$map2,
+		_user$project$Model$StartPollOutput,
+		A2(_elm_lang$core$Json_Decode$field, 'poll_id', _elm_lang$core$Json_Decode$string),
+		A2(_elm_lang$core$Json_Decode$field, 'error', _elm_lang$core$Json_Decode$string));
+	var questions = model.start_poll_form_type_is_free ? '' : (_elm_lang$core$Native_Utils.eq(
+		_elm_lang$core$String$length(model.start_poll_form_questions),
+		0) ? 'a' : model.start_poll_form_questions);
 	var body = _elm_lang$http$Http$jsonBody(
 		_elm_lang$core$Json_Encode$object(
 			{
 				ctor: '::',
 				_0: {
 					ctor: '_Tuple2',
-					_0: 'poll_name',
-					_1: _elm_lang$core$Json_Encode$string(model.poll_name)
+					_0: 'poll_number',
+					_1: _elm_lang$core$Json_Encode$int(model.start_poll_form_number)
 				},
 				_1: {
 					ctor: '::',
 					_0: {
 						ctor: '_Tuple2',
-						_0: 'user_name',
-						_1: _elm_lang$core$Json_Encode$string(model.user_name)
+						_0: 'poll_title',
+						_1: _elm_lang$core$Json_Encode$string(model.start_poll_form_title)
 					},
 					_1: {
 						ctor: '::',
 						_0: {
 							ctor: '_Tuple2',
-							_0: 'answers',
-							_1: _elm_lang$core$Json_Encode$array(
-								A2(_elm_lang$core$Array$map, _elm_lang$core$Json_Encode$int, model.fixed_answers))
+							_0: 'poll_questions',
+							_1: _elm_lang$core$Json_Encode$string(questions)
 						},
 						_1: {ctor: '[]'}
 					}
@@ -9154,105 +9821,13 @@ var _user$project$Rest$fill_poll = function (model) {
 			}));
 	return A2(
 		_elm_lang$http$Http$send,
-		_user$project$Model$FillFixedPollReturn,
-		A3(_elm_lang$http$Http$post, '/fill_poll', body, return_string_decoder));
+		_user$project$Model$StartPollResult,
+		A3(_elm_lang$http$Http$post, '/start_poll', body, decoder));
 };
-var _user$project$Rest$fill_free_entry_poll = function (model) {
-	var return_string_decoder = _elm_lang$core$Json_Decode$string;
-	var body = _elm_lang$http$Http$jsonBody(
-		_elm_lang$core$Json_Encode$object(
-			{
-				ctor: '::',
-				_0: {
-					ctor: '_Tuple2',
-					_0: 'poll_name',
-					_1: _elm_lang$core$Json_Encode$string(model.poll_name)
-				},
-				_1: {
-					ctor: '::',
-					_0: {
-						ctor: '_Tuple2',
-						_0: 'user_name',
-						_1: _elm_lang$core$Json_Encode$string(model.user_name)
-					},
-					_1: {
-						ctor: '::',
-						_0: {
-							ctor: '_Tuple2',
-							_0: 'answers',
-							_1: _elm_lang$core$Json_Encode$string(model.free_answers)
-						},
-						_1: {ctor: '[]'}
-					}
-				}
-			}));
-	return A2(
-		_elm_lang$http$Http$send,
-		_user$project$Model$FillFreeEntryPollReturn,
-		A3(_elm_lang$http$Http$post, '/fill_free_entry_poll', body, return_string_decoder));
-};
-var _user$project$Rest$get_poll = function (model) {
-	var return_gotten_poll_decoder = A4(
-		_elm_lang$core$Json_Decode$map3,
-		_user$project$Model$GottenPoll,
-		A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
-		A2(
-			_elm_lang$core$Json_Decode$field,
-			'questions',
-			_elm_lang$core$Json_Decode$array(_elm_lang$core$Json_Decode$string)),
-		A2(_elm_lang$core$Json_Decode$field, 'error_string', _elm_lang$core$Json_Decode$string));
-	var body = _elm_lang$http$Http$jsonBody(
-		_elm_lang$core$Json_Encode$string(model.poll_name));
-	return A2(
-		_elm_lang$http$Http$send,
-		_user$project$Model$GetPollReturn,
-		A3(_elm_lang$http$Http$post, '/get_poll', body, return_gotten_poll_decoder));
-};
-var _user$project$Rest$start_poll = function (model) {
-	var return_string_decoder = _elm_lang$core$Json_Decode$string;
-	var questions = model.qtype_is_free ? '' : (_elm_lang$core$Native_Utils.eq(
-		_elm_lang$core$String$length(model.questions),
-		0) ? 'a' : model.questions);
-	var body = _elm_lang$http$Http$jsonBody(
-		_elm_lang$core$Json_Encode$object(
-			{
-				ctor: '::',
-				_0: {
-					ctor: '_Tuple2',
-					_0: 'name',
-					_1: _elm_lang$core$Json_Encode$string(model.poll_name)
-				},
-				_1: {
-					ctor: '::',
-					_0: {
-						ctor: '_Tuple2',
-						_0: 'number',
-						_1: _elm_lang$core$Json_Encode$int(model.number)
-					},
-					_1: {
-						ctor: '::',
-						_0: {
-							ctor: '_Tuple2',
-							_0: 'title',
-							_1: _elm_lang$core$Json_Encode$string(model.title)
-						},
-						_1: {
-							ctor: '::',
-							_0: {
-								ctor: '_Tuple2',
-								_0: 'questions',
-								_1: _elm_lang$core$Json_Encode$string(questions)
-							},
-							_1: {ctor: '[]'}
-						}
-					}
-				}
-			}));
-	return A2(
-		_elm_lang$http$Http$send,
-		_user$project$Model$StartPollReturn,
-		A3(_elm_lang$http$Http$post, '/start_poll', body, return_string_decoder));
-};
+var _user$project$Update$saturate_range = F3(
+	function (min, max, num) {
+		return (_elm_lang$core$Native_Utils.cmp(num, min) < 0) ? min : ((_elm_lang$core$Native_Utils.cmp(num, max) > 0) ? max : num);
+	});
 var _user$project$Update$http_err_to_string = function (err) {
 	var _p0 = err;
 	switch (_p0.ctor) {
@@ -9278,65 +9853,25 @@ var _user$project$Update$update = F2(
 	function (msg, model) {
 		var _p1 = msg;
 		switch (_p1.ctor) {
-			case 'SetNavBar':
-				var _p2 = _p1._0;
-				return _elm_lang$core$Native_Utils.eq(_p2, model.navbar_state) ? {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none} : {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							navbar_state: _p2,
-							poll_name: '',
-							number: 0,
-							title: '',
-							qtype_is_free: false,
-							questions: '',
-							error: '',
-							message: '',
-							gotten_questions: _elm_lang$core$Array$empty,
-							free_answers: '',
-							user_name: '',
-							fixed_answers: _elm_lang$core$Array$empty,
-							user_names: {ctor: '[]'},
-							all_yay: {ctor: '[]'},
-							all_open: {ctor: '[]'}
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'UpdatePollName':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{poll_name: _p1._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+			case 'UrlChange':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'UpdateTitle':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{title: _p1._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'UpdateQuestions':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{questions: _p1._0}),
+						{start_poll_form_title: _p1._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'UpdateNumber':
-				var _p3 = _elm_lang$core$String$toInt(_p1._0);
-				if (_p3.ctor === 'Ok') {
-					var _p4 = _p3._0;
+				var _p2 = _elm_lang$core$String$toInt(_p1._0);
+				if (_p2.ctor === 'Ok') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								number: (_elm_lang$core$Native_Utils.cmp(_p4, 20) > 0) ? 20 : _p4
+								start_poll_form_number: A3(_user$project$Update$saturate_range, 0, 20, _p2._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -9345,16 +9880,24 @@ var _user$project$Update$update = F2(
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{number: 0}),
+							{start_poll_form_number: 0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
+			case 'UpdateQuestions':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{start_poll_form_questions: _p1._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 			case 'ClickedFree':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{qtype_is_free: true}),
+						{start_poll_form_type_is_free: true}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ClickedFixed':
@@ -9362,244 +9905,31 @@ var _user$project$Update$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{qtype_is_free: false}),
+						{start_poll_form_type_is_free: false}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ClickedSubmitPoll':
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: _user$project$Rest$start_poll(model)
-				};
-			case 'StartPollReturn':
-				if (_p1._0.ctor === 'Ok') {
-					var _p5 = _p1._0._0;
-					return (_elm_lang$core$Native_Utils.cmp(
-						_elm_lang$core$String$length(_p5),
-						0) > 0) ? {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								error: A2(_elm_lang$core$Basics_ops['++'], 'Error: ', _p5)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					} : {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								navbar_state: _user$project$Model$NavMessage,
-								message: A2(_elm_lang$core$Basics_ops['++'], 'Poll was added successfully. Its name is: ', model.poll_name)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				} else {
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								error: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'StartPollReturn Error: ',
-									_user$project$Update$http_err_to_string(_p1._0._0))
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				}
-			case 'ClickedGetPoll':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Rest$get_poll(model)
-				};
-			case 'GetPollReturn':
-				if (_p1._0.ctor === 'Ok') {
-					var _p6 = _p1._0._0;
-					return (_elm_lang$core$Native_Utils.cmp(
-						_elm_lang$core$String$length(_p6.error),
-						0) > 0) ? {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								error: A2(_elm_lang$core$Basics_ops['++'], 'Error: ', _p6.error)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					} : {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								title: _p6.title,
-								gotten_questions: _p6.questions,
-								fixed_answers: A2(
-									_elm_lang$core$Array$repeat,
-									_elm_lang$core$Array$length(_p6.questions),
-									3),
-								error: ''
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				} else {
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								error: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'GetPollReturn Error: ',
-									_user$project$Update$http_err_to_string(_p1._0._0))
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				}
-			case 'UpdateUserName':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{user_name: _p1._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'UpdateFreeAnswers':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{free_answers: _p1._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'ClickedSubmitFreeAnswers':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Rest$fill_free_entry_poll(model)
-				};
-			case 'FillFreeEntryPollReturn':
-				if (_p1._0.ctor === 'Ok') {
-					var _p7 = _p1._0._0;
-					return (_elm_lang$core$Native_Utils.cmp(
-						_elm_lang$core$String$length(_p7),
-						0) > 0) ? {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								error: A2(_elm_lang$core$Basics_ops['++'], 'Error: ', _p7)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					} : {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								navbar_state: _user$project$Model$NavMessage,
-								message: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'Answers to poll ',
-									A2(_elm_lang$core$Basics_ops['++'], model.poll_name, ' were submitted successfully.'))
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				} else {
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								error: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'FillFreeEntryPollReturn Error: ',
-									_user$project$Update$http_err_to_string(_p1._0._0))
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				}
-			case 'ClickedSubmitFixedAnswers':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Rest$fill_poll(model)
-				};
-			case 'SetFixedAnswer':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							fixed_answers: A3(_elm_lang$core$Array$set, _p1._0, _p1._1, model.fixed_answers)
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'FillFixedPollReturn':
-				if (_p1._0.ctor === 'Ok') {
-					var _p8 = _p1._0._0;
-					return (_elm_lang$core$Native_Utils.cmp(
-						_elm_lang$core$String$length(_p8),
-						0) > 0) ? {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								error: A2(_elm_lang$core$Basics_ops['++'], 'Error: ', _p8)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					} : {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								navbar_state: _user$project$Model$NavMessage,
-								message: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'Answers to poll ',
-									A2(_elm_lang$core$Basics_ops['++'], model.poll_name, ' were submitted successfully.'))
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				} else {
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								error: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'FillFixedPollReturn Error: ',
-									_user$project$Update$http_err_to_string(_p1._0._0))
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				}
-			case 'ClickedGetPollResult':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Rest$get_poll_results(model)
+					_1: _user$project$Rest$send_start_poll(model)
 				};
 			default:
 				if (_p1._0.ctor === 'Ok') {
-					var _p9 = _p1._0._0;
-					return (_elm_lang$core$Native_Utils.cmp(
-						_elm_lang$core$String$length(_p9.error),
-						0) > 0) ? {
+					var _p3 = _p1._0._0;
+					return ((!_elm_lang$core$Native_Utils.eq(_p3.poll_id, '')) && _elm_lang$core$Native_Utils.eq(_p3.error, '')) ? {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{
-								error: A2(_elm_lang$core$Basics_ops['++'], 'Error: ', _p9.error)
-							}),
+							{error: _p3.error, poll_id: _p3.poll_id, page: _user$project$Model$ShowPollLinkPage}),
 						_1: _elm_lang$core$Platform_Cmd$none
-					} : {
+					} : ((_elm_lang$core$Native_Utils.eq(_p3.poll_id, '') && (!_elm_lang$core$Native_Utils.eq(_p3.error, ''))) ? {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{title: _p9.title, user_names: _p9.user_names, all_yay: _p9.all_yay, all_open: _p9.all_open}),
+							{error: _p3.error, poll_id: _p3.poll_id}),
 						_1: _elm_lang$core$Platform_Cmd$none
-					};
+					} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none});
 				} else {
 					return {
 						ctor: '_Tuple2',
@@ -9608,7 +9938,7 @@ var _user$project$Update$update = F2(
 							{
 								error: A2(
 									_elm_lang$core$Basics_ops['++'],
-									'GetPollResultReturn Error: ',
+									'StartPollResult Error: ',
 									_user$project$Update$http_err_to_string(_p1._0._0))
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
@@ -9616,40 +9946,6 @@ var _user$project$Update$update = F2(
 				}
 		}
 	});
-var _user$project$View$see_message = function (message) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{ctor: '[]'},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$p,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'color', _1: 'red'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
-									_1: {ctor: '[]'}
-								}
-							}
-						}),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text(message),
-					_1: {ctor: '[]'}
-				}),
-			_1: {ctor: '[]'}
-		});
-};
 var _user$project$View$start_poll = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -9734,13 +10030,14 @@ var _user$project$View$start_poll = function (model) {
 												_0: _elm_lang$html$Html_Attributes$type_('text'),
 												_1: {
 													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Token'),
+													_0: _elm_lang$html$Html_Attributes$placeholder('#Responders'),
 													_1: {
 														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdatePollName),
+														_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateNumber),
 														_1: {
 															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$value(model.poll_name),
+															_0: _elm_lang$html$Html_Attributes$value(
+																_elm_lang$core$Native_Utils.eq(model.start_poll_form_number, 0) ? '' : _elm_lang$core$Basics$toString(model.start_poll_form_number)),
 															_1: {ctor: '[]'}
 														}
 													}
@@ -9778,14 +10075,13 @@ var _user$project$View$start_poll = function (model) {
 													_0: _elm_lang$html$Html_Attributes$type_('text'),
 													_1: {
 														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$placeholder('#Responders'),
+														_0: _elm_lang$html$Html_Attributes$placeholder('Title'),
 														_1: {
 															ctor: '::',
-															_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateNumber),
+															_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateTitle),
 															_1: {
 																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$value(
-																	_elm_lang$core$Native_Utils.eq(model.number, 0) ? '' : _elm_lang$core$Basics$toString(model.number)),
+																_0: _elm_lang$html$Html_Attributes$value(model.start_poll_form_title),
 																_1: {ctor: '[]'}
 															}
 														}
@@ -9811,553 +10107,19 @@ var _user$project$View$start_poll = function (model) {
 											_elm_lang$html$Html$div,
 											{
 												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: A2(
-													_elm_lang$html$Html$input,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$type_('text'),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$placeholder('Title'),
-															_1: {
-																ctor: '::',
-																_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateTitle),
-																_1: {
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Attributes$value(model.title),
-																	_1: {ctor: '[]'}
-																}
-															}
-														}
-													},
-													{ctor: '[]'}),
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {
-									ctor: '::',
-									_0: A2(
-										_elm_lang$html$Html$div,
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$class('row'),
-											_1: {ctor: '[]'}
-										},
-										{
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$div,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$class('btn-group col-md-4'),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$style(
-															{
-																ctor: '::',
-																_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '.2cm'},
-																_1: {ctor: '[]'}
-															}),
-														_1: {ctor: '[]'}
-													}
-												},
-												{
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html$button,
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$class('btn btn-primary'),
-															_1: {
-																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$disabled(!model.qtype_is_free),
-																_1: {
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedFixed),
-																	_1: {ctor: '[]'}
-																}
-															}
-														},
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html$text('Fixed'),
-															_1: {ctor: '[]'}
-														}),
-													_1: {
-														ctor: '::',
-														_0: A2(
-															_elm_lang$html$Html$button,
-															{
-																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$class('btn btn-primary'),
-																_1: {
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Attributes$disabled(model.qtype_is_free),
-																	_1: {
-																		ctor: '::',
-																		_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedFree),
-																		_1: {ctor: '[]'}
-																	}
-																}
-															},
-															{
-																ctor: '::',
-																_0: _elm_lang$html$Html$text('Free'),
-																_1: {ctor: '[]'}
-															}),
-														_1: {ctor: '[]'}
-													}
-												}),
-											_1: {ctor: '[]'}
-										}),
-									_1: {
-										ctor: '::',
-										_0: model.qtype_is_free ? A2(
-											_elm_lang$html$Html$div,
-											{ctor: '[]'},
-											{ctor: '[]'}) : A2(
-											_elm_lang$html$Html$div,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$class('row'),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: A2(
-													_elm_lang$html$Html$div,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-														_1: {ctor: '[]'}
-													},
-													{
-														ctor: '::',
-														_0: A2(
-															_elm_lang$html$Html$textarea,
-															{
-																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$rows(10),
-																_1: {
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Attributes$style(
-																		{
-																			ctor: '::',
-																			_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '.2cm'},
-																			_1: {
-																				ctor: '::',
-																				_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '.2cm'},
-																				_1: {ctor: '[]'}
-																			}
-																		}),
-																	_1: {
-																		ctor: '::',
-																		_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateQuestions),
-																		_1: {
-																			ctor: '::',
-																			_0: _elm_lang$html$Html_Attributes$value(model.questions),
-																			_1: {ctor: '[]'}
-																		}
-																	}
-																}
-															},
-															{ctor: '[]'}),
-														_1: {ctor: '[]'}
-													}),
-												_1: {ctor: '[]'}
-											}),
-										_1: {
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$div,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$class('row'),
-													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html$div,
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-															_1: {ctor: '[]'}
-														},
-														{
-															ctor: '::',
-															_0: A2(
-																_elm_lang$html$Html$button,
-																{
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedSubmitPoll),
-																	_1: {ctor: '[]'}
-																},
-																{
-																	ctor: '::',
-																	_0: _elm_lang$html$Html$text('Submit'),
-																	_1: {ctor: '[]'}
-																}),
-															_1: {ctor: '[]'}
-														}),
-													_1: {ctor: '[]'}
-												}),
-											_1: {
-												ctor: '::',
-												_0: A2(
-													_elm_lang$html$Html$div,
-													{ctor: '[]'},
-													{
-														ctor: '::',
-														_0: (_elm_lang$core$Native_Utils.cmp(
-															_elm_lang$core$String$length(model.error),
-															0) > 0) ? A2(
-															_elm_lang$html$Html$p,
-															{
-																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$style(
-																	{
-																		ctor: '::',
-																		_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-																		_1: {
-																			ctor: '::',
-																			_0: {ctor: '_Tuple2', _0: 'color', _1: 'red'},
-																			_1: {ctor: '[]'}
-																		}
-																	}),
-																_1: {ctor: '[]'}
-															},
-															{
-																ctor: '::',
-																_0: _elm_lang$html$Html$text(model.error),
-																_1: {ctor: '[]'}
-															}) : A2(
-															_elm_lang$html$Html$div,
-															{ctor: '[]'},
-															{ctor: '[]'}),
-														_1: {ctor: '[]'}
-													}),
-												_1: {ctor: '[]'}
-											}
-										}
-									}
-								}
-							}
-						}
-					}),
-				_1: {ctor: '[]'}
-			}
-		});
-};
-var _user$project$View$greeting = A2(
-	_elm_lang$html$Html$div,
-	{ctor: '[]'},
-	{
-		ctor: '::',
-		_0: A2(
-			_elm_lang$html$Html$h1,
-			{ctor: '[]'},
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text(''),
-				_1: {ctor: '[]'}
-			}),
-		_1: {ctor: '[]'}
-	});
-var _user$project$View$navbar = function (navbar_state) {
-	return A2(
-		_elm_lang$html$Html$nav,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$class('navbar navbar-inverse'),
-			_1: {ctor: '[]'}
-		},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$div,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('container-fluid'),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$div,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$class('navbar-header'),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$a,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$class('navbar-brand'),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'color', _1: 'purple'},
-												_1: {ctor: '[]'}
-											}),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$href('javascript:;'),
-											_1: {
-												ctor: '::',
-												_0: _elm_lang$html$Html_Events$onClick(
-													_user$project$Model$SetNavBar(_user$project$Model$NavGreeting)),
-												_1: {ctor: '[]'}
-											}
-										}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('Matcher'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$ul,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class('nav navbar-nav'),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$li,
-									_elm_lang$core$Native_Utils.eq(navbar_state, _user$project$Model$NavStartPoll) ? {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('active disabled'),
-										_1: {ctor: '[]'}
-									} : {ctor: '[]'},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$a,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$href('javascript:;'),
+												_0: _elm_lang$html$Html_Attributes$class('btn-group col-md-4'),
 												_1: {
 													ctor: '::',
-													_0: _elm_lang$html$Html_Events$onClick(
-														_user$project$Model$SetNavBar(_user$project$Model$NavStartPoll)),
+													_0: _elm_lang$html$Html_Attributes$style(
+														{
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '.2cm'},
+															_1: {ctor: '[]'}
+														}),
 													_1: {ctor: '[]'}
 												}
 											},
 											{
-												ctor: '::',
-												_0: _elm_lang$html$Html$text('Start Survey'),
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {
-									ctor: '::',
-									_0: A2(
-										_elm_lang$html$Html$li,
-										_elm_lang$core$Native_Utils.eq(navbar_state, _user$project$Model$NavFillPoll) ? {
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$class('active disabled'),
-											_1: {ctor: '[]'}
-										} : {ctor: '[]'},
-										{
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$a,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$href('javascript:;'),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onClick(
-															_user$project$Model$SetNavBar(_user$project$Model$NavFillPoll)),
-														_1: {ctor: '[]'}
-													}
-												},
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html$text('Fill Survey'),
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}),
-									_1: {
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$li,
-											_elm_lang$core$Native_Utils.eq(navbar_state, _user$project$Model$NavSeePoll) ? {
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$class('active disabled'),
-												_1: {ctor: '[]'}
-											} : {ctor: '[]'},
-											{
-												ctor: '::',
-												_0: A2(
-													_elm_lang$html$Html$a,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$href('javascript:;'),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$html$Html_Events$onClick(
-																_user$project$Model$SetNavBar(_user$project$Model$NavSeePoll)),
-															_1: {ctor: '[]'}
-														}
-													},
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html$text('See Survey'),
-														_1: {ctor: '[]'}
-													}),
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}
-								}
-							}),
-						_1: {ctor: '[]'}
-					}
-				}),
-			_1: {ctor: '[]'}
-		});
-};
-var _user$project$View$capitalize = function (s) {
-	return A2(
-		_elm_lang$core$Basics_ops['++'],
-		_elm_lang$core$String$toUpper(
-			A2(_elm_lang$core$String$left, 1, s)),
-		A2(_elm_lang$core$String$dropLeft, 1, s));
-};
-var _user$project$View$button_row = F3(
-	function (model, index, question) {
-		var _p0 = A2(_elm_lang$core$Array$get, index, model.fixed_answers);
-		if (_p0.ctor === 'Just') {
-			var _p1 = _p0._0;
-			return A2(
-				_elm_lang$html$Html$div,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('row'),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$div,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$p,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$style(
-										{
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'font-size', _1: '16px'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '.1cm'},
-												_1: {ctor: '[]'}
-											}
-										}),
-									_1: {ctor: '[]'}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text(
-										_user$project$View$capitalize(question)),
-									_1: {ctor: '[]'}
-								}),
-							_1: {
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('btn-group'),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$style(
-												{
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '.4cm'},
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$button,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$class('btn btn-primary'),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$disabled(
-														_elm_lang$core$Native_Utils.eq(_p1, 2)),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onClick(
-															A2(_user$project$Model$SetFixedAnswer, index, 2)),
-														_1: {ctor: '[]'}
-													}
-												}
-											},
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html$text('Yay'),
-												_1: {ctor: '[]'}
-											}),
-										_1: {
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$button,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$class('btn btn-primary'),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$disabled(
-															_elm_lang$core$Native_Utils.eq(_p1, 1)),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$html$Html_Events$onClick(
-																A2(_user$project$Model$SetFixedAnswer, index, 1)),
-															_1: {ctor: '[]'}
-														}
-													}
-												},
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html$text('Open to'),
-													_1: {ctor: '[]'}
-												}),
-											_1: {
 												ctor: '::',
 												_0: A2(
 													_elm_lang$html$Html$button,
@@ -10366,382 +10128,39 @@ var _user$project$View$button_row = F3(
 														_0: _elm_lang$html$Html_Attributes$class('btn btn-primary'),
 														_1: {
 															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$disabled(
-																_elm_lang$core$Native_Utils.eq(_p1, 0)),
+															_0: _elm_lang$html$Html_Attributes$disabled(!model.start_poll_form_type_is_free),
 															_1: {
 																ctor: '::',
-																_0: _elm_lang$html$Html_Events$onClick(
-																	A2(_user$project$Model$SetFixedAnswer, index, 0)),
+																_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedFixed),
 																_1: {ctor: '[]'}
 															}
 														}
 													},
 													{
 														ctor: '::',
-														_0: _elm_lang$html$Html$text('Nope'),
-														_1: {ctor: '[]'}
-													}),
-												_1: {ctor: '[]'}
-											}
-										}
-									}),
-								_1: {ctor: '[]'}
-							}
-						}),
-					_1: {ctor: '[]'}
-				});
-		} else {
-			return A2(
-				_elm_lang$html$Html$div,
-				{ctor: '[]'},
-				{ctor: '[]'});
-		}
-	});
-var _user$project$View$show_list = F2(
-	function (name, list) {
-		return (_elm_lang$core$Native_Utils.cmp(
-			_elm_lang$core$List$length(list),
-			0) > 0) ? A2(
-			_elm_lang$html$Html$div,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'margin', _1: '1cm'},
-						_1: {ctor: '[]'}
-					}),
-				_1: {ctor: '[]'}
-			},
-			{
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$div,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$class('row'),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$div,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class('col-md-6'),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$style(
-										{
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-												_1: {ctor: '[]'}
-											}
-										}),
-									_1: {ctor: '[]'}
-								}
-							},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text(name),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$div,
-						{ctor: '[]'},
-						A2(
-							_elm_lang$core$List$map,
-							function (x) {
-								return A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('row'),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$div,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html$text(
-													_user$project$View$capitalize(x)),
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									});
-							},
-							list)),
-					_1: {ctor: '[]'}
-				}
-			}) : A2(
-			_elm_lang$html$Html$div,
-			{ctor: '[]'},
-			{ctor: '[]'});
-	});
-var _user$project$View$onEnter = function (msg) {
-	var isEnter = function (code) {
-		return _elm_lang$core$Native_Utils.eq(code, 13) ? _elm_lang$core$Json_Decode$succeed(msg) : _elm_lang$core$Json_Decode$fail('not ENTER');
-	};
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'keydown',
-		A2(_elm_lang$core$Json_Decode$andThen, isEnter, _elm_lang$html$Html_Events$keyCode));
-};
-var _user$project$View$fill_poll = function (model) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$class('container'),
-			_1: {ctor: '[]'}
-		},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$h1,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'margin', _1: '.2cm'},
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text('Fill Survey'),
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$div,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$class('col-md-12'),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'margin', _1: '.2cm'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'padding', _1: '.2cm'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border', _1: '.5px solid red'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '4px'},
-												_1: {ctor: '[]'}
-											}
-										}
-									}
-								}),
-							_1: {ctor: '[]'}
-						}
-					},
-					_elm_lang$core$Native_Utils.eq(
-						_elm_lang$core$String$length(model.title),
-						0) ? {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$div,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class('row'),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$input,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$type_('text'),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Token'),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdatePollName),
-														_1: {
-															ctor: '::',
-															_0: _user$project$View$onEnter(_user$project$Model$ClickedGetPoll),
-															_1: {
-																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$value(model.poll_name),
-																_1: {ctor: '[]'}
-															}
-														}
-													}
-												}
-											},
-											{ctor: '[]'}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$div,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$class('row'),
-									_1: {ctor: '[]'}
-								},
-								{
-									ctor: '::',
-									_0: A2(
-										_elm_lang$html$Html$div,
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-											_1: {ctor: '[]'}
-										},
-										{
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$button,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedGetPoll),
-													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html$text('Get Survey'),
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}),
-									_1: {ctor: '[]'}
-								}),
-							_1: {
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{ctor: '[]'},
-									{
-										ctor: '::',
-										_0: (_elm_lang$core$Native_Utils.cmp(
-											_elm_lang$core$String$length(model.error),
-											0) > 0) ? A2(
-											_elm_lang$html$Html$p,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$style(
-													{
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-														_1: {
-															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'color', _1: 'red'},
-															_1: {ctor: '[]'}
-														}
-													}),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html$text(model.error),
-												_1: {ctor: '[]'}
-											}) : A2(
-											_elm_lang$html$Html$div,
-											{ctor: '[]'},
-											{ctor: '[]'}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}
-						}
-					} : (_elm_lang$core$Native_Utils.eq(
-						_elm_lang$core$Array$length(model.gotten_questions),
-						0) ? {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$div,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('row'),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$div,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: A2(
-													_elm_lang$html$Html$p,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$style(
-															{
-																ctor: '::',
-																_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-																_1: {
-																	ctor: '::',
-																	_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
-																	_1: {ctor: '[]'}
-																}
-															}),
-														_1: {ctor: '[]'}
-													},
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html$text(
-															A2(
-																_elm_lang$core$Basics_ops['++'],
-																'Polling ',
-																_user$project$View$capitalize(model.title))),
+														_0: _elm_lang$html$Html$text('Fixed'),
 														_1: {ctor: '[]'}
 													}),
 												_1: {
 													ctor: '::',
 													_0: A2(
-														_elm_lang$html$Html$p,
-														{ctor: '[]'},
+														_elm_lang$html$Html$button,
 														{
 															ctor: '::',
-															_0: _elm_lang$html$Html$text('(Free entry)'),
+															_0: _elm_lang$html$Html_Attributes$class('btn btn-primary'),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$html$Html_Attributes$disabled(model.start_poll_form_type_is_free),
+																_1: {
+																	ctor: '::',
+																	_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedFree),
+																	_1: {ctor: '[]'}
+																}
+															}
+														},
+														{
+															ctor: '::',
+															_0: _elm_lang$html$Html$text('Free'),
 															_1: {ctor: '[]'}
 														}),
 													_1: {ctor: '[]'}
@@ -10751,7 +10170,10 @@ var _user$project$View$fill_poll = function (model) {
 									}),
 								_1: {
 									ctor: '::',
-									_0: A2(
+									_0: model.start_poll_form_type_is_free ? A2(
+										_elm_lang$html$Html$div,
+										{ctor: '[]'},
+										{ctor: '[]'}) : A2(
 										_elm_lang$html$Html$div,
 										{
 											ctor: '::',
@@ -10770,19 +10192,28 @@ var _user$project$View$fill_poll = function (model) {
 												{
 													ctor: '::',
 													_0: A2(
-														_elm_lang$html$Html$input,
+														_elm_lang$html$Html$textarea,
 														{
 															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$type_('text'),
+															_0: _elm_lang$html$Html_Attributes$rows(10),
 															_1: {
 																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$placeholder('User Name'),
+																_0: _elm_lang$html$Html_Attributes$style(
+																	{
+																		ctor: '::',
+																		_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '.2cm'},
+																		_1: {
+																			ctor: '::',
+																			_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '.2cm'},
+																			_1: {ctor: '[]'}
+																		}
+																	}),
 																_1: {
 																	ctor: '::',
-																	_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateUserName),
+																	_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateQuestions),
 																	_1: {
 																		ctor: '::',
-																		_0: _elm_lang$html$Html_Attributes$value(model.user_name),
+																		_0: _elm_lang$html$Html_Attributes$value(model.start_poll_form_questions),
 																		_1: {ctor: '[]'}
 																	}
 																}
@@ -10814,563 +10245,21 @@ var _user$project$View$fill_poll = function (model) {
 													{
 														ctor: '::',
 														_0: A2(
-															_elm_lang$html$Html$textarea,
+															_elm_lang$html$Html$button,
 															{
 																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$rows(10),
-																_1: {
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Attributes$style(
-																		{
-																			ctor: '::',
-																			_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '.2cm'},
-																			_1: {
-																				ctor: '::',
-																				_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '.2cm'},
-																				_1: {ctor: '[]'}
-																			}
-																		}),
-																	_1: {
-																		ctor: '::',
-																		_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateFreeAnswers),
-																		_1: {
-																			ctor: '::',
-																			_0: _elm_lang$html$Html_Attributes$value(model.free_answers),
-																			_1: {ctor: '[]'}
-																		}
-																	}
-																}
+																_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedSubmitPoll),
+																_1: {ctor: '[]'}
 															},
-															{ctor: '[]'}),
-														_1: {ctor: '[]'}
-													}),
-												_1: {ctor: '[]'}
-											}),
-										_1: {
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$div,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$class('row'),
-													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html$div,
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-															_1: {ctor: '[]'}
-														},
-														{
-															ctor: '::',
-															_0: A2(
-																_elm_lang$html$Html$button,
-																{
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedSubmitFreeAnswers),
-																	_1: {ctor: '[]'}
-																},
-																{
-																	ctor: '::',
-																	_0: _elm_lang$html$Html$text('Submit'),
-																	_1: {ctor: '[]'}
-																}),
-															_1: {ctor: '[]'}
-														}),
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}
-									}
-								}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$div,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: (_elm_lang$core$Native_Utils.cmp(
-										_elm_lang$core$String$length(model.error),
-										0) > 0) ? A2(
-										_elm_lang$html$Html$p,
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$style(
-												{
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-													_1: {
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'color', _1: 'red'},
-														_1: {ctor: '[]'}
-													}
-												}),
-											_1: {ctor: '[]'}
-										},
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html$text(model.error),
-											_1: {ctor: '[]'}
-										}) : A2(
-										_elm_lang$html$Html$div,
-										{ctor: '[]'},
-										{ctor: '[]'}),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}
-					} : {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$div,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('row'),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$div,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: A2(
-													_elm_lang$html$Html$p,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$style(
 															{
 																ctor: '::',
-																_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-																_1: {
-																	ctor: '::',
-																	_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
-																	_1: {ctor: '[]'}
-																}
+																_0: _elm_lang$html$Html$text('Submit'),
+																_1: {ctor: '[]'}
 															}),
 														_1: {ctor: '[]'}
-													},
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html$text(
-															A2(
-																_elm_lang$core$Basics_ops['++'],
-																'Polling ',
-																_user$project$View$capitalize(model.title))),
-														_1: {ctor: '[]'}
 													}),
 												_1: {ctor: '[]'}
 											}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {
-									ctor: '::',
-									_0: A2(
-										_elm_lang$html$Html$div,
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$class('row'),
-											_1: {ctor: '[]'}
-										},
-										{
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$div,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html$input,
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$type_('text'),
-															_1: {
-																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$placeholder('User Name'),
-																_1: {
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateUserName),
-																	_1: {
-																		ctor: '::',
-																		_0: _elm_lang$html$Html_Attributes$value(model.user_name),
-																		_1: {ctor: '[]'}
-																	}
-																}
-															}
-														},
-														{ctor: '[]'}),
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}),
-									_1: {
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$div,
-											{ctor: '[]'},
-											_elm_lang$core$Array$toList(
-												A2(
-													_elm_lang$core$Array$indexedMap,
-													_user$project$View$button_row(model),
-													model.gotten_questions))),
-										_1: {
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$div,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$class('row'),
-													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html$div,
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-															_1: {ctor: '[]'}
-														},
-														{
-															ctor: '::',
-															_0: A2(
-																_elm_lang$html$Html$button,
-																{
-																	ctor: '::',
-																	_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedSubmitFixedAnswers),
-																	_1: {ctor: '[]'}
-																},
-																{
-																	ctor: '::',
-																	_0: _elm_lang$html$Html$text('Submit'),
-																	_1: {ctor: '[]'}
-																}),
-															_1: {ctor: '[]'}
-														}),
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}
-									}
-								}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$div,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: (_elm_lang$core$Native_Utils.cmp(
-										_elm_lang$core$String$length(model.error),
-										0) > 0) ? A2(
-										_elm_lang$html$Html$p,
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$style(
-												{
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-													_1: {
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'color', _1: 'red'},
-														_1: {ctor: '[]'}
-													}
-												}),
-											_1: {ctor: '[]'}
-										},
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html$text(model.error),
-											_1: {ctor: '[]'}
-										}) : A2(
-										_elm_lang$html$Html$div,
-										{ctor: '[]'},
-										{ctor: '[]'}),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}
-					})),
-				_1: {ctor: '[]'}
-			}
-		});
-};
-var _user$project$View$see_poll = function (model) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$class('container'),
-			_1: {ctor: '[]'}
-		},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$h1,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'margin', _1: '.2cm'},
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text('See Survey'),
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$div,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$class('col-md-12'),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$style(
-								{
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'margin', _1: '.2cm'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'padding', _1: '.2cm'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border', _1: '.5px solid red'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '4px'},
-												_1: {ctor: '[]'}
-											}
-										}
-									}
-								}),
-							_1: {ctor: '[]'}
-						}
-					},
-					_elm_lang$core$Native_Utils.eq(
-						_elm_lang$core$String$length(model.title),
-						0) ? {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$div,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class('row'),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$input,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$type_('text'),
-												_1: {
-													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$placeholder('Survey Token'),
-													_1: {
-														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdatePollName),
-														_1: {
-															ctor: '::',
-															_0: _user$project$View$onEnter(_user$project$Model$ClickedGetPollResult),
-															_1: {
-																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$value(model.poll_name),
-																_1: {ctor: '[]'}
-															}
-														}
-													}
-												}
-											},
-											{ctor: '[]'}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$div,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$class('row'),
-									_1: {ctor: '[]'}
-								},
-								{
-									ctor: '::',
-									_0: A2(
-										_elm_lang$html$Html$div,
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-											_1: {ctor: '[]'}
-										},
-										{
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$button,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedGetPollResult),
-													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html$text('Get Survey Results'),
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}),
-									_1: {ctor: '[]'}
-								}),
-							_1: {
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{ctor: '[]'},
-									{
-										ctor: '::',
-										_0: (_elm_lang$core$Native_Utils.cmp(
-											_elm_lang$core$String$length(model.error),
-											0) > 0) ? A2(
-											_elm_lang$html$Html$p,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$style(
-													{
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-														_1: {
-															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'color', _1: 'red'},
-															_1: {ctor: '[]'}
-														}
-													}),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html$text(model.error),
-												_1: {ctor: '[]'}
-											}) : A2(
-											_elm_lang$html$Html$div,
-											{ctor: '[]'},
-											{ctor: '[]'}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}
-						}
-					} : {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$div,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class('row'),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$div,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('col-md-4'),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$p,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$style(
-													{
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'font-weight', _1: 'bold'},
-														_1: {
-															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'font-size', _1: '20px'},
-															_1: {ctor: '[]'}
-														}
-													}),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html$text(
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														'Survey ',
-														_user$project$View$capitalize(model.title))),
-												_1: {ctor: '[]'}
-											}),
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(_user$project$View$show_list, 'Surveyed', model.user_names),
-							_1: {
-								ctor: '::',
-								_0: A2(_user$project$View$show_list, 'Everyone says yay to:', model.all_yay),
-								_1: {
-									ctor: '::',
-									_0: A2(_user$project$View$show_list, 'Everyone is at least open to trying: ', model.all_open),
-									_1: {
-										ctor: '::',
-										_0: (_elm_lang$core$Native_Utils.eq(
-											_elm_lang$core$List$length(model.all_yay),
-											0) && _elm_lang$core$Native_Utils.eq(
-											_elm_lang$core$List$length(model.all_open),
-											0)) ? A2(
-											_elm_lang$html$Html$div,
-											{ctor: '[]'},
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html$text('There are no categories all surveyed are at least open to.'),
-												_1: {ctor: '[]'}
-											}) : A2(
-											_elm_lang$html$Html$div,
-											{ctor: '[]'},
-											{ctor: '[]'}),
 										_1: {
 											ctor: '::',
 											_0: A2(
@@ -11458,36 +10347,43 @@ var _user$project$View$view = function (model) {
 						{ctor: '[]'},
 						{
 							ctor: '::',
-							_0: _user$project$View$navbar(model.navbar_state),
-							_1: {
-								ctor: '::',
-								_0: function () {
-									var _p2 = model.navbar_state;
-									switch (_p2.ctor) {
-										case 'NavGreeting':
-											return _user$project$View$greeting;
-										case 'NavStartPoll':
-											return _user$project$View$start_poll(model);
-										case 'NavFillPoll':
-											return _user$project$View$fill_poll(model);
-										case 'NavSeePoll':
-											return _user$project$View$see_poll(model);
-										default:
-											return _user$project$View$see_message(model.message);
-									}
-								}(),
-								_1: {ctor: '[]'}
-							}
+							_0: function () {
+								var _p0 = model.page;
+								if (_p0.ctor === 'StartPollPage') {
+									return _user$project$View$start_poll(model);
+								} else {
+									return A2(
+										_elm_lang$html$Html$div,
+										{ctor: '[]'},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text(model.poll_id),
+											_1: {ctor: '[]'}
+										});
+								}
+							}(),
+							_1: {ctor: '[]'}
 						}),
 					_1: {ctor: '[]'}
 				}
 			}
 		});
 };
+var _user$project$View$onEnter = function (msg) {
+	var isEnter = function (code) {
+		return _elm_lang$core$Native_Utils.eq(code, 13) ? _elm_lang$core$Json_Decode$succeed(msg) : _elm_lang$core$Json_Decode$fail('not ENTER');
+	};
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'keydown',
+		A2(_elm_lang$core$Json_Decode$andThen, isEnter, _elm_lang$html$Html_Events$keyCode));
+};
 var _user$project$Main$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$none;
 };
-var _user$project$Main$main = _elm_lang$html$Html$program(
+var _user$project$Main$main = A2(
+	_elm_lang$navigation$Navigation$program,
+	_user$project$Model$UrlChange,
 	{init: _user$project$Model$init, view: _user$project$View$view, update: _user$project$Update$update, subscriptions: _user$project$Main$subscriptions})();
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};

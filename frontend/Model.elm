@@ -1,70 +1,126 @@
 module Model exposing (..)
 
+import Navigation
+import Regex
+
 import Http
-import Array
---import Time exposing (Time)
+--import Array
 
-type alias PollResult =
-  { title: String
-  , user_names: List String
-  , all_yay: List String
-  , all_open: List String
+--type alias PollResult =
+--  { title: String
+--  , user_names: List String
+--  , all_yay: List String
+--  , all_open: List String
+--  , error: String
+--  }
+
+--type alias GottenPoll =
+--  { title: String
+--  , questions: Array.Array String
+--  , error: String
+--  }
+
+--type NavBarState
+--  = NavGreeting
+--  | NavStartPoll
+--  | NavFillPoll
+--  | NavSeePoll
+--  | NavMessage
+
+--type Msg
+--  = SetNavBar NavBarState
+--  | UpdatePollName String
+--  | UpdateTitle String
+--  | UpdateNumber String
+--  | ClickedFree
+--  | ClickedFixed
+--  | UpdateQuestions String
+--  | ClickedSubmitPoll
+--  | StartPollReturn (Result Http.Error String)
+--  --| PollNameExistsReturn (Result Http.Error Bool)
+--  | ClickedGetPoll
+--  | GetPollReturn (Result Http.Error GottenPoll)
+--  | UpdateFreeAnswers String
+--  | ClickedSubmitFreeAnswers
+--  | UpdateUserName String
+--  | FillFreeEntryPollReturn (Result Http.Error String)
+--  | ClickedSubmitFixedAnswers
+--  | SetFixedAnswer Int Int
+--  | FillFixedPollReturn (Result Http.Error String)
+--  | ClickedGetPollResult
+--  | GetPollResultReturn (Result Http.Error PollResult)
+
+--type alias Model =
+--  { navbar_state: NavBarState
+--  , poll_name: String
+--  , number: Int
+--  , title: String
+--  , qtype_is_free: Bool
+--  , questions: String
+--  , error: String
+--  , message: String
+--  , gotten_questions: Array.Array String
+--  , free_answers: String
+--  , user_name: String
+--  , fixed_answers: Array.Array Int
+--  , user_names: List String
+--  , all_yay: List String
+--  , all_open: List String
+--  }
+
+--init: (Model, Cmd Msg)
+--init = (Model NavGreeting "" 0 "" False "" "" "" Array.empty "" "" Array.empty [] [] [], Cmd.none)
+
+
+
+type Page
+  = StartPollPage
+  | ShowPollLinkPage
+
+type alias StartPollOutput =
+  { poll_id: String
   , error: String
   }
-
-type alias GottenPoll =
-  { title: String
-  , questions: Array.Array String
-  , error: String
-  }
-
-type NavBarState
-  = NavGreeting
-  | NavStartPoll
-  | NavFillPoll
-  | NavSeePoll
-  | NavMessage
 
 type Msg
-  = SetNavBar NavBarState
-  | UpdatePollName String
+  = UrlChange Navigation.Location
   | UpdateTitle String
   | UpdateNumber String
-  | ClickedFree
   | ClickedFixed
+  | ClickedFree
   | UpdateQuestions String
   | ClickedSubmitPoll
-  | StartPollReturn (Result Http.Error String)
-  --| PollNameExistsReturn (Result Http.Error Bool)
-  | ClickedGetPoll
-  | GetPollReturn (Result Http.Error GottenPoll)
-  | UpdateFreeAnswers String
-  | ClickedSubmitFreeAnswers
-  | UpdateUserName String
-  | FillFreeEntryPollReturn (Result Http.Error String)
-  | ClickedSubmitFixedAnswers
-  | SetFixedAnswer Int Int
-  | FillFixedPollReturn (Result Http.Error String)
-  | ClickedGetPollResult
-  | GetPollResultReturn (Result Http.Error PollResult)
+  | StartPollResult (Result Http.Error StartPollOutput)
 
 type alias Model =
-  { navbar_state: NavBarState
-  , poll_name: String
-  , number: Int
-  , title: String
-  , qtype_is_free: Bool
-  , questions: String
+  { page: Page
   , error: String
-  , message: String
-  , gotten_questions: Array.Array String
-  , free_answers: String
-  , user_name: String
-  , fixed_answers: Array.Array Int
-  , user_names: List String
-  , all_yay: List String
-  , all_open: List String
+  , poll_id: String
+-- -- --> Poll form
+  , start_poll_form_title: String
+  , start_poll_form_number: Int
+  , start_poll_form_type_is_free: Bool
+  , start_poll_form_questions: String
   }
 
-init: (Model, Cmd Msg)
-init = (Model NavGreeting "" 0 "" False "" "" "" Array.empty "" "" Array.empty [] [] [], Cmd.none)
+
+get_var_value: String -> String -> Maybe String
+get_var_value search varname=
+  let
+    regex=Regex.regex <| ""++varname++"=(\\w+)"
+    matches=Regex.find (Regex.AtMost 1) regex search
+  in
+    List.head matches
+    |> Maybe.andThen (\match -> List.head match.submatches)
+    |> Maybe.andThen (\submatch -> submatch)
+
+init : Navigation.Location -> ( Model, Cmd Msg )
+init location=
+  let
+    var = (Maybe.withDefault "" (get_var_value location.search "var"))
+  in
+    ( Model
+      StartPollPage "" ""
+-- -- --> Poll Form
+      "" 0 False ""
+      , Cmd.none)

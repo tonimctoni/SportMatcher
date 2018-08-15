@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 use rocket::response::NamedFile;
 
 
-mod start_poll_fn;
+mod func;
 mod data;
 mod characters;
 
@@ -329,7 +329,7 @@ fn files(file: PathBuf) -> Option<NamedFile> {
 }
 
 fn main() {
-    use start_poll_fn::*;
+    use func::*;
     let data=data::Data::new();
 
     rocket::ignite()
