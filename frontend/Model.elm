@@ -76,6 +76,8 @@ import Http
 type Page
   = StartPollPage
   | ShowPollLinkPage
+  | FillPollPage
+  | ShowPollPage
 
 type alias StartPollOutput =
   { poll_id: String
@@ -97,17 +99,27 @@ type alias Model =
   , error: String
   , poll_id: String
 -- -- --> Poll form
-  , start_poll_form_title: String
-  , start_poll_form_number: Int
-  , start_poll_form_type_is_free: Bool
-  , start_poll_form_questions: String
+  , poll_title: String
+  , poll_number: Int
+  , poll_type_is_free: Bool
+  , poll_questions: String
   }
 
 
-get_var_value: String -> String -> Maybe String
-get_var_value search varname=
+--get_var_value: String -> String -> Maybe String
+--get_var_value search varname=
+--  let
+--    regex=Regex.regex <| ""++varname++"=(\\w+)"
+--    matches=Regex.find (Regex.AtMost 1) regex search
+--  in
+--    List.head matches
+--    |> Maybe.andThen (\match -> List.head match.submatches)
+--    |> Maybe.andThen (\submatch -> submatch)
+
+get_poll_id_from_var: String -> Maybe String
+get_poll_id_from_var search=
   let
-    regex=Regex.regex <| ""++varname++"=(\\w+)"
+    regex=Regex.regex <| "poll_id=([0123456789abcdefABCDEF]+)"
     matches=Regex.find (Regex.AtMost 1) regex search
   in
     List.head matches
@@ -116,11 +128,13 @@ get_var_value search varname=
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location=
-  let
-    var = (Maybe.withDefault "" (get_var_value location.search "var"))
-  in
+  --let
+  --  --(poll_id, page)=case get_poll_id_from_var location.search of
+  --  --  Nothing -> ("",StartPollPage)
+  --  --  Maybe poll_id -> (poll_id,)
+  --in
     ( Model
-      StartPollPage "" ""
+      StartPollPage (toString location) ""
 -- -- --> Poll Form
       "" 0 False ""
       , Cmd.none)

@@ -30,4 +30,12 @@ impl Data {
         self.polls.insert(id.clone(), poll); //Some polls might get overwritten, but that is unlikely, so it is ok.
         id
     }
+
+    pub fn get_poll(&self, poll_id: &String) -> Option<&Poll>{
+        self.polls.get(poll_id)
+    }
+
+    pub fn get_poll_mut(&mut self, poll_id: &String) -> Option<&mut Poll>{
+        self.polls.get_mut(poll_id)
+    }
 }

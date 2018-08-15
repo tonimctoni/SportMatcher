@@ -10,14 +10,14 @@ import Json.Encode as Encode
 send_start_poll: Model -> Cmd Msg
 send_start_poll model =
   let
-    questions=if model.start_poll_form_type_is_free
+    questions=if model.poll_type_is_free
       then ""
-      else if String.length model.start_poll_form_questions==0
+      else if String.length model.poll_questions==0
         then "a"
-        else model.start_poll_form_questions
+        else model.poll_questions
     body =
-      [ ("poll_number", Encode.int model.start_poll_form_number)
-      , ("poll_title", Encode.string model.start_poll_form_title)
+      [ ("poll_number", Encode.int model.poll_number)
+      , ("poll_title", Encode.string model.poll_title)
       , ("poll_questions", Encode.string questions)
       ]
       |> Encode.object
@@ -29,7 +29,7 @@ send_start_poll model =
   in
     Http.send StartPollResult (Http.post "/start_poll" (body) decoder)
 
-
+--send_get_poll: String -> Cmd Msg
 
 ----poll_name_exists: Model -> Cmd Msg
 ----poll_name_exists model =

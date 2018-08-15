@@ -91,14 +91,14 @@ http_err_to_string err =
 --  , questions: String
 --  }
 
---new_start_poll_form: StartPollForm
---new_start_poll_form =
+--new_poll: StartPollForm
+--new_poll =
 --  StartPollForm "" 0 False ""
 
 --type alias Model =
 --  { page: Page
 --  , poll_id: String
---  , start_poll_form: StartPollForm
+--  , poll: StartPollForm
 --  }
 
 saturate_range: Int -> Int -> Int -> Int
@@ -109,14 +109,6 @@ saturate_range min max num=
   then max
   else num
 
---set_start_poll_form: Model -> StartPollForm -> Model
---set_start_poll_form model start_poll_form=
---  let
---    old_form = model.start_poll_form
---    new_form = {old_form |}
---  in
---    {model | start_poll_form=start_poll_form}
-
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
@@ -124,17 +116,17 @@ update msg model =
       (model, Cmd.none)
 -- -- --> Start poll form messages
     UpdateTitle new_title ->
-      ({model | start_poll_form_title=new_title}, Cmd.none)
+      ({model | poll_title=new_title}, Cmd.none)
     UpdateNumber new_number ->
       case String.toInt new_number of
-        Ok new_number -> ({model | start_poll_form_number=(saturate_range 0 20 new_number)}, Cmd.none)
-        Err _ -> ({model | start_poll_form_number=0}, Cmd.none)
+        Ok new_number -> ({model | poll_number=(saturate_range 0 20 new_number)}, Cmd.none)
+        Err _ -> ({model | poll_number=0}, Cmd.none)
     UpdateQuestions questions ->
-      ({model | start_poll_form_questions=questions}, Cmd.none)
+      ({model | poll_questions=questions}, Cmd.none)
     ClickedFree ->
-      ({model | start_poll_form_type_is_free=True}, Cmd.none)
+      ({model | poll_type_is_free=True}, Cmd.none)
     ClickedFixed ->
-      ({model | start_poll_form_type_is_free=False}, Cmd.none)
+      ({model | poll_type_is_free=False}, Cmd.none)
     ClickedSubmitPoll ->
       (model, send_start_poll model)
     StartPollResult (Ok start_poll_output) ->
@@ -145,28 +137,3 @@ update msg model =
       else (model, Cmd.none)
     StartPollResult (Err err) ->
       ({model | error="StartPollResult Error: "++(http_err_to_string err)}, Cmd.none)
-
-    --UpdateTitle new_title ->
-    --  (set_start_poll_form model {model.start_poll_form | title=new_title}, Cmd.none)
-    --UpdateNumber new_number ->
-    --  case String.toInt new_number of
-    --    Ok new_number (set_start_poll_form model {model.start_poll_form | number=saturate_range 0 20 new_number}, Cmd.none)
-    --    Err _ -> (model, Cmd.none)
-    --UpdateQuestions questions ->
-    --  (set_start_poll_form model {model.start_poll_form | questions=questions}, Cmd.none)
-    --ClickedFree questions ->
-    --  (set_start_poll_form model {model.start_poll_form | type_is_free=True}, Cmd.none)
-    --ClickedFixed questions ->
-    --  (set_start_poll_form model {model.start_poll_form | type_is_free=Frue}, Cmd.none)
-    --ClickedSubmitPoll ->
-    --  (model, Cmd.none)
-
-
---    UpdateTitle title -> ({model | title=title}, Cmd.none)
---    UpdateQuestions questions -> ({model | questions=questions}, Cmd.none)
---    UpdateNumber number -> case String.toInt number of
---      Ok number -> ({model | number=if number>20 then 20 else number}, Cmd.none)
---      Err _ -> ({model | number=0}, Cmd.none)
---    ClickedFree -> ({model | qtype_is_free=True}, Cmd.none)
---    ClickedFixed -> ({model | qtype_is_free=False}, Cmd.none)
---    ClickedSubmitPoll -> (model, start_poll model)

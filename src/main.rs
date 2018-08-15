@@ -323,7 +323,7 @@ fn index() -> io::Result<NamedFile> {
     NamedFile::open("frontend/index.html")
 }
 
-#[get("/<file..>")]
+#[get("/static/<file..>")]
 fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("resources/").join(file)).ok()
 }
@@ -334,6 +334,6 @@ fn main() {
 
     rocket::ignite()
     .manage(Mutex::new(data))
-    .mount("/", routes![index, files, start_poll])
+    .mount("/", routes![index, files, start_poll, get_poll, fill_poll, fill_free_entry_poll, get_poll_results])
     .launch();
 }

@@ -9720,48 +9720,49 @@ var _elm_lang$navigation$Navigation$onEffects = F4(
 			stepState);
 	});
 _elm_lang$core$Native_Platform.effectManagers['Navigation'] = {pkg: 'elm-lang/navigation', init: _elm_lang$navigation$Navigation$init, onEffects: _elm_lang$navigation$Navigation$onEffects, onSelfMsg: _elm_lang$navigation$Navigation$onSelfMsg, tag: 'fx', cmdMap: _elm_lang$navigation$Navigation$cmdMap, subMap: _elm_lang$navigation$Navigation$subMap};
-var _user$project$Model$get_var_value = F2(
-	function (search, varname) {
-		var regex = _elm_lang$core$Regex$regex(
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				'',
-				A2(_elm_lang$core$Basics_ops['++'], varname, '=(\\w+)')));
-		var matches = A3(
-			_elm_lang$core$Regex$find,
-			_elm_lang$core$Regex$AtMost(1),
-			regex,
-			search);
-		return A2(
+var _user$project$Model$get_poll_id_from_var = function (search) {
+	var regex = _elm_lang$core$Regex$regex('poll_id=([0123456789abcdefABCDEF]+)');
+	var matches = A3(
+		_elm_lang$core$Regex$find,
+		_elm_lang$core$Regex$AtMost(1),
+		regex,
+		search);
+	return A2(
+		_elm_lang$core$Maybe$andThen,
+		function (submatch) {
+			return submatch;
+		},
+		A2(
 			_elm_lang$core$Maybe$andThen,
-			function (submatch) {
-				return submatch;
+			function (match) {
+				return _elm_lang$core$List$head(match.submatches);
 			},
-			A2(
-				_elm_lang$core$Maybe$andThen,
-				function (match) {
-					return _elm_lang$core$List$head(match.submatches);
-				},
-				_elm_lang$core$List$head(matches)));
-	});
+			_elm_lang$core$List$head(matches)));
+};
 var _user$project$Model$StartPollOutput = F2(
 	function (a, b) {
 		return {poll_id: a, error: b};
 	});
 var _user$project$Model$Model = F7(
 	function (a, b, c, d, e, f, g) {
-		return {page: a, error: b, poll_id: c, start_poll_form_title: d, start_poll_form_number: e, start_poll_form_type_is_free: f, start_poll_form_questions: g};
+		return {page: a, error: b, poll_id: c, poll_title: d, poll_number: e, poll_type_is_free: f, poll_questions: g};
 	});
+var _user$project$Model$ShowPollPage = {ctor: 'ShowPollPage'};
+var _user$project$Model$FillPollPage = {ctor: 'FillPollPage'};
 var _user$project$Model$ShowPollLinkPage = {ctor: 'ShowPollLinkPage'};
 var _user$project$Model$StartPollPage = {ctor: 'StartPollPage'};
 var _user$project$Model$init = function (location) {
-	var $var = A2(
-		_elm_lang$core$Maybe$withDefault,
-		'',
-		A2(_user$project$Model$get_var_value, location.search, 'var'));
 	return {
 		ctor: '_Tuple2',
-		_0: A7(_user$project$Model$Model, _user$project$Model$StartPollPage, '', '', '', 0, false, ''),
+		_0: A7(
+			_user$project$Model$Model,
+			_user$project$Model$StartPollPage,
+			_elm_lang$core$Basics$toString(location),
+			'',
+			'',
+			0,
+			false,
+			''),
 		_1: _elm_lang$core$Platform_Cmd$none
 	};
 };
@@ -9789,9 +9790,9 @@ var _user$project$Rest$send_start_poll = function (model) {
 		_user$project$Model$StartPollOutput,
 		A2(_elm_lang$core$Json_Decode$field, 'poll_id', _elm_lang$core$Json_Decode$string),
 		A2(_elm_lang$core$Json_Decode$field, 'error', _elm_lang$core$Json_Decode$string));
-	var questions = model.start_poll_form_type_is_free ? '' : (_elm_lang$core$Native_Utils.eq(
-		_elm_lang$core$String$length(model.start_poll_form_questions),
-		0) ? 'a' : model.start_poll_form_questions);
+	var questions = model.poll_type_is_free ? '' : (_elm_lang$core$Native_Utils.eq(
+		_elm_lang$core$String$length(model.poll_questions),
+		0) ? 'a' : model.poll_questions);
 	var body = _elm_lang$http$Http$jsonBody(
 		_elm_lang$core$Json_Encode$object(
 			{
@@ -9799,14 +9800,14 @@ var _user$project$Rest$send_start_poll = function (model) {
 				_0: {
 					ctor: '_Tuple2',
 					_0: 'poll_number',
-					_1: _elm_lang$core$Json_Encode$int(model.start_poll_form_number)
+					_1: _elm_lang$core$Json_Encode$int(model.poll_number)
 				},
 				_1: {
 					ctor: '::',
 					_0: {
 						ctor: '_Tuple2',
 						_0: 'poll_title',
-						_1: _elm_lang$core$Json_Encode$string(model.start_poll_form_title)
+						_1: _elm_lang$core$Json_Encode$string(model.poll_title)
 					},
 					_1: {
 						ctor: '::',
@@ -9860,7 +9861,7 @@ var _user$project$Update$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{start_poll_form_title: _p1._0}),
+						{poll_title: _p1._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'UpdateNumber':
@@ -9871,7 +9872,7 @@ var _user$project$Update$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								start_poll_form_number: A3(_user$project$Update$saturate_range, 0, 20, _p2._0)
+								poll_number: A3(_user$project$Update$saturate_range, 0, 20, _p2._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -9880,7 +9881,7 @@ var _user$project$Update$update = F2(
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{start_poll_form_number: 0}),
+							{poll_number: 0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
@@ -9889,7 +9890,7 @@ var _user$project$Update$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{start_poll_form_questions: _p1._0}),
+						{poll_questions: _p1._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ClickedFree':
@@ -9897,7 +9898,7 @@ var _user$project$Update$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{start_poll_form_type_is_free: true}),
+						{poll_type_is_free: true}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ClickedFixed':
@@ -9905,7 +9906,7 @@ var _user$project$Update$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{start_poll_form_type_is_free: false}),
+						{poll_type_is_free: false}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ClickedSubmitPoll':
@@ -10037,7 +10038,7 @@ var _user$project$View$start_poll = function (model) {
 														_1: {
 															ctor: '::',
 															_0: _elm_lang$html$Html_Attributes$value(
-																_elm_lang$core$Native_Utils.eq(model.start_poll_form_number, 0) ? '' : _elm_lang$core$Basics$toString(model.start_poll_form_number)),
+																_elm_lang$core$Native_Utils.eq(model.poll_number, 0) ? '' : _elm_lang$core$Basics$toString(model.poll_number)),
 															_1: {ctor: '[]'}
 														}
 													}
@@ -10081,7 +10082,7 @@ var _user$project$View$start_poll = function (model) {
 															_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateTitle),
 															_1: {
 																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$value(model.start_poll_form_title),
+																_0: _elm_lang$html$Html_Attributes$value(model.poll_title),
 																_1: {ctor: '[]'}
 															}
 														}
@@ -10128,7 +10129,7 @@ var _user$project$View$start_poll = function (model) {
 														_0: _elm_lang$html$Html_Attributes$class('btn btn-primary'),
 														_1: {
 															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$disabled(!model.start_poll_form_type_is_free),
+															_0: _elm_lang$html$Html_Attributes$disabled(!model.poll_type_is_free),
 															_1: {
 																ctor: '::',
 																_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedFixed),
@@ -10150,7 +10151,7 @@ var _user$project$View$start_poll = function (model) {
 															_0: _elm_lang$html$Html_Attributes$class('btn btn-primary'),
 															_1: {
 																ctor: '::',
-																_0: _elm_lang$html$Html_Attributes$disabled(model.start_poll_form_type_is_free),
+																_0: _elm_lang$html$Html_Attributes$disabled(model.poll_type_is_free),
 																_1: {
 																	ctor: '::',
 																	_0: _elm_lang$html$Html_Events$onClick(_user$project$Model$ClickedFree),
@@ -10170,7 +10171,7 @@ var _user$project$View$start_poll = function (model) {
 									}),
 								_1: {
 									ctor: '::',
-									_0: model.start_poll_form_type_is_free ? A2(
+									_0: model.poll_type_is_free ? A2(
 										_elm_lang$html$Html$div,
 										{ctor: '[]'},
 										{ctor: '[]'}) : A2(
@@ -10213,7 +10214,7 @@ var _user$project$View$start_poll = function (model) {
 																	_0: _elm_lang$html$Html_Events$onInput(_user$project$Model$UpdateQuestions),
 																	_1: {
 																		ctor: '::',
-																		_0: _elm_lang$html$Html_Attributes$value(model.start_poll_form_questions),
+																		_0: _elm_lang$html$Html_Attributes$value(model.poll_questions),
 																		_1: {ctor: '[]'}
 																	}
 																}
@@ -10320,7 +10321,7 @@ var _user$project$View$view = function (model) {
 					_0: _elm_lang$html$Html_Attributes$rel('stylesheet'),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$href('/bootstrap/css/bootstrap.min.css'),
+						_0: _elm_lang$html$Html_Attributes$href('/static/bootstrap/css/bootstrap.min.css'),
 						_1: {ctor: '[]'}
 					}
 				},
@@ -10349,17 +10350,36 @@ var _user$project$View$view = function (model) {
 							ctor: '::',
 							_0: function () {
 								var _p0 = model.page;
-								if (_p0.ctor === 'StartPollPage') {
-									return _user$project$View$start_poll(model);
-								} else {
-									return A2(
-										_elm_lang$html$Html$div,
-										{ctor: '[]'},
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html$text(model.poll_id),
-											_1: {ctor: '[]'}
-										});
+								switch (_p0.ctor) {
+									case 'StartPollPage':
+										return _user$project$View$start_poll(model);
+									case 'ShowPollLinkPage':
+										return A2(
+											_elm_lang$html$Html$div,
+											{ctor: '[]'},
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html$text(model.poll_id),
+												_1: {ctor: '[]'}
+											});
+									case 'FillPollPage':
+										return A2(
+											_elm_lang$html$Html$div,
+											{ctor: '[]'},
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html$text(model.poll_id),
+												_1: {ctor: '[]'}
+											});
+									default:
+										return A2(
+											_elm_lang$html$Html$div,
+											{ctor: '[]'},
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html$text(model.poll_id),
+												_1: {ctor: '[]'}
+											});
 								}
 							}(),
 							_1: {ctor: '[]'}

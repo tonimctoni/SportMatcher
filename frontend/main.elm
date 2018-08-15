@@ -4,7 +4,6 @@ import Model exposing (..)
 import Update exposing (update)
 import View exposing (view)
 import Navigation
-import Regex
 
 subscriptions: Model -> Sub Msg
 subscriptions model =
