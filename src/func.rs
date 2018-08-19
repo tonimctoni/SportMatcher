@@ -100,9 +100,7 @@ impl GetPollOutput {
 }
 
 #[get("/get_poll/<poll_id>")]
-fn get_poll(mut poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollOutput>{
-    poll_id.make_ascii_lowercase();
-
+fn get_poll(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollOutput>{
     match data.lock() {
         Err(_) => GetPollOutput::err("Server error."),
         Ok(data) => match data.get_poll(&poll_id) {
@@ -150,14 +148,14 @@ fn fill_poll(data: State<Mutex<Data>>, fill_poll_input: Json<FillPollInput>) -> 
     match data.lock() {
         Err(_) => Json("Server error."),
         Ok(mut data) => match data.get_poll_mut(&poll_id) {
-            None => Json("A poll with that id does not exists."),
+            None => Json("A survey with that id does not exists."),
             Some(mut poll) => {
                 if poll.answers.len()>=poll.number as usize{
-                    Json("This poll has already been filled by the required amount of users.")
+                    Json("This survey has already been filled by the required amount of users.")
                 } else if poll.answers.iter().any(|a| (*a).0==user_name){
-                    Json("A user with that name has already answered the poll.")
+                    Json("A user with that name has already answered the survey.")
                 } else if poll.questions.len()!=answers.len(){
-                    Json("The number of poll questions and answers is different.")
+                    Json("The number of survey questions and answers is different.")
                 } else {
                     let answers=answers.into_iter()
                     .map(|a| if a==2 {"y".to_string()} else if a==1 {"o".to_string()} else {"n".to_string()})

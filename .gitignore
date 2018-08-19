@@ -5,3 +5,10 @@ frontend/elm-stuff
 frontend/elm-package.json
 experiment
 backup
+frontend/backup
+frontend/start_poll/elm-stuff
+frontend/start_poll/elm-package.json
+frontend/fill_poll/elm-stuff
+frontend/fill_poll/elm-package.json
+frontend/see_poll/elm-stuff
+frontend/see_poll/elm-package.json
