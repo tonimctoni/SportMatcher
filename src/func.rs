@@ -78,47 +78,47 @@ pub fn start_poll(data: State<Mutex<Data>>, start_poll_input: Json<StartPollInpu
     }
 }
 
-#[derive(Serialize)]
-pub struct GetPollOutput {
-    title: String,
-    questions: Vec<String>,
-    polls_filled: usize,
-    polls_number: isize,
-    error: &'static str,
-}
+// #[derive(Serialize)]
+// pub struct GetPollOutput {
+//     title: String,
+//     questions: Vec<String>,
+//     polls_filled: usize,
+//     polls_number: isize,
+//     error: &'static str,
+// }
 
-impl GetPollOutput {
-    fn err(error: &'static str) -> Json<GetPollOutput>{
-        Json(GetPollOutput{
-            title: String::new(),
-            questions: Vec::new(),
-            polls_filled: 0,
-            polls_number: 0,
-            error: error,
-        })
-    }
-}
+// impl GetPollOutput {
+//     fn err(error: &'static str) -> Json<GetPollOutput>{
+//         Json(GetPollOutput{
+//             title: String::new(),
+//             questions: Vec::new(),
+//             polls_filled: 0,
+//             polls_number: 0,
+//             error: error,
+//         })
+//     }
+// }
 
-#[get("/get_poll/<poll_id>")]
-pub fn get_poll(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollOutput>{
-    match data.lock() {
-        Err(_) => GetPollOutput::err("Server error."),
-        Ok(data) => match data.get_poll(&poll_id) {
-            None => GetPollOutput::err("A poll with that id does not exists."),
-            Some(poll) => {
-                Json(
-                    GetPollOutput{
-                        title: poll.title.clone(),
-                        polls_filled: poll.answers.len(),
-                        polls_number: poll.number,
-                        questions: poll.questions.clone(),
-                        error: "",
-                    }
-                )
-            },
-        },
-    }
-}
+// #[get("/get_poll/<poll_id>")]
+// pub fn get_poll(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollOutput>{
+//     match data.lock() {
+//         Err(_) => GetPollOutput::err("Server error."),
+//         Ok(data) => match data.get_poll(&poll_id) {
+//             None => GetPollOutput::err("A poll with that id does not exists."),
+//             Some(poll) => {
+//                 Json(
+//                     GetPollOutput{
+//                         title: poll.title.clone(),
+//                         polls_filled: poll.answers.len(),
+//                         polls_number: poll.number,
+//                         questions: poll.questions.clone(),
+//                         error: "",
+//                     }
+//                 )
+//             },
+//         },
+//     }
+// }
 
 #[derive(Deserialize)]
 pub struct FillPollInput {
@@ -226,64 +226,175 @@ pub fn fill_free_entry_poll(data: State<Mutex<Data>>, fill_free_entry_poll_input
     }
 }
 
+// #[derive(Serialize)]
+// pub struct GetPollResultsOutput {
+//     title: String,
+//     user_names: Vec<String>,
+//     all_yay: Vec<String>,
+//     all_open: Vec<String>,
+//     error: String,
+// }
+
+// impl GetPollResultsOutput {
+//     fn err<T: Into<String>>(error: T) -> Json<GetPollResultsOutput>{
+//         Json(GetPollResultsOutput{
+//             title: String::new(),
+//             user_names: Vec::new(),
+//             all_yay: Vec::new(),
+//             all_open: Vec::new(),
+//             error: error.into(),
+//         })
+//     }
+// }
+
+// #[get("/get_poll_results/<poll_id>")]
+// pub fn get_poll_results(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollResultsOutput>{
+//     let mut result_template=GetPollResultsOutput{title: "".into(), user_names: vec![], all_yay: vec![], all_open: vec![], error: String::new()};
+//     match data.lock() {
+//         Err(_) => GetPollResultsOutput::err("Server error."),
+//         Ok(data) => match data.get_poll(&poll_id) {
+//             None => GetPollResultsOutput::err("A survey with that id does not exists."),
+//             Some(poll) => {
+//                 result_template.title=poll.title.clone();
+//                 result_template.user_names=poll.answers.iter().map(|x| (*x).0.clone()).collect::<Vec<String>>();
+//                 if poll.answers.len() < poll.number as usize || poll.answers.len() < 2{
+//                     GetPollResultsOutput::err(format!("This survey needs {} responses, but it only has {}.", poll.number, poll.answers.len()))
+//                 }
+//                 else if poll.questions.is_empty(){
+//                     match poll.answers.split_first() {
+//                         None => GetPollResultsOutput::err("Server error."),
+//                         Some((head, tail)) => {
+//                             result_template.all_yay=head.1.iter()
+//                             .filter(|q| tail.iter().all(|tq| (*tq).1.contains(q)))
+//                             .cloned()
+//                             .collect::<Vec<String>>();
+
+//                             Json(result_template)
+//                         },
+//                     }
+//                 } else {
+//                     if !poll.answers.iter().all(|a| (*a).1.len()==poll.questions.len()){
+//                         GetPollResultsOutput::err("Server error.")
+//                     } else{
+//                         result_template.all_yay=poll.questions.iter()
+//                         .enumerate()
+//                         .filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]=="y"))
+//                         .map(|ia| ia.1)
+//                         .cloned()
+//                         .collect::<Vec<String>>();
+
+//                         result_template.all_open=poll.questions.iter()
+//                         .enumerate()
+//                         .filter(|ia| !poll.answers.iter().all(|a| a.1[ia.0]=="y"))
+//                         .filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]!="n"))
+//                         .map(|ia| ia.1)
+//                         .cloned()
+//                         .collect::<Vec<String>>();
+
+//                         Json(result_template)
+//                     }
+//                 }
+//             },
+//         },
+//     }
+// }
+
 #[derive(Serialize)]
-pub struct GetPollResultsOutput {
+struct PollQuestions {
+    title: String,
+    questions: Vec<String>,
+    polls_filled: usize,
+    polls_number: isize,
+}
+
+#[derive(Serialize)]
+struct PollAnswers {
     title: String,
     user_names: Vec<String>,
     all_yay: Vec<String>,
     all_open: Vec<String>,
-    error: String,
 }
 
-impl GetPollResultsOutput {
-    fn err<T: Into<String>>(error: T) -> Json<GetPollResultsOutput>{
-        Json(GetPollResultsOutput{
-            title: String::new(),
-            user_names: Vec::new(),
-            all_yay: Vec::new(),
-            all_open: Vec::new(),
-            error: error.into(),
+#[derive(Serialize)]
+pub struct GetPollOutput{
+    questions: Option<PollQuestions>,
+    answers: Option<PollAnswers>,
+    error: &'static str,
+}
+
+impl GetPollOutput {
+    fn json_err(error: &'static str) -> Json<GetPollOutput>{
+        Json(GetPollOutput{
+            questions: None,
+            answers: None,
+            error: error,
+        })
+    }
+
+    fn json_questions(title: String, questions: Vec<String>, polls_filled: usize, polls_number: isize) -> Json<GetPollOutput>{
+        Json(GetPollOutput{
+            questions: Some(PollQuestions{
+                title: title,
+                questions: questions,
+                polls_filled: polls_filled,
+                polls_number: polls_number,
+            }),
+            answers: None,
+            error: "",
+        })
+    }
+
+    fn json_answers(title: String, user_names: Vec<String>, all_yay: Vec<String>, all_open: Vec<String>) -> Json<GetPollOutput>{
+        Json(GetPollOutput{
+            questions: None,
+            answers: Some(PollAnswers{
+                title: title,
+                user_names: user_names,
+                all_yay: all_yay,
+                all_open: all_open,
+            }),
+            error: "",
         })
     }
 }
 
-#[get("/get_poll_results/<poll_id>")]
-pub fn get_poll_results(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollResultsOutput>{
-    let mut result_template=GetPollResultsOutput{title: "".into(), user_names: vec![], all_yay: vec![], all_open: vec![], error: String::new()};
+#[get("/get_poll/<poll_id>")]
+pub fn get_poll(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollOutput>{
     match data.lock() {
-        Err(_) => GetPollResultsOutput::err("Server error."),
+        Err(_) => GetPollOutput::json_err("Server error."),
         Ok(data) => match data.get_poll(&poll_id) {
-            None => GetPollResultsOutput::err("A survey with that id does not exists."),
+            None => GetPollOutput::json_err("A poll with that id does not exists."),
             Some(poll) => {
-                result_template.title=poll.title.clone();
-                result_template.user_names=poll.answers.iter().map(|x| (*x).0.clone()).collect::<Vec<String>>();
-                if poll.answers.len() < poll.number as usize || poll.answers.len() < 2{
-                    GetPollResultsOutput::err(format!("This survey needs {} responses, but it only has {}.", poll.number, poll.answers.len()))
-                }
-                else if poll.questions.is_empty(){
-                    match poll.answers.split_first() {
-                        None => GetPollResultsOutput::err("Server error."),
-                        Some((head, tail)) => {
-                            result_template.all_yay=head.1.iter()
+                if (poll.answers.len() as isize) < poll.number{
+                    GetPollOutput::json_questions(poll.title.clone(), poll.questions.clone(), poll.answers.len(), poll.number)
+                } else{
+                    let title=poll.title.clone();
+                    let user_names=poll.answers.iter().map(|x| (*x).0.clone()).collect::<Vec<String>>();
+
+                    let (all_yay, all_open) = if poll.questions.is_empty(){
+                        let all_yay=if let Some((head, tail)) = poll.answers.split_first(){
+                            head.1.iter()
                             .filter(|q| tail.iter().all(|tq| (*tq).1.contains(q)))
                             .cloned()
-                            .collect::<Vec<String>>();
+                            .collect::<Vec<String>>()
+                        } else {
+                            return GetPollOutput::json_err("Server error.");
+                        };
 
-                            Json(result_template)
-                        },
-                    }
-                } else {
-                    if !poll.answers.iter().all(|a| (*a).1.len()==poll.questions.len()){
-                        GetPollResultsOutput::err("Server error.")
-                    } else{
-                        result_template.all_yay=poll.questions.iter()
+                        (all_yay, Vec::new())
+                    }else{
+                        if !poll.answers.iter().all(|a| (*a).1.len()==poll.questions.len()){
+                            return GetPollOutput::json_err("Server error.");
+                        }
+
+                        let all_yay=poll.questions.iter()
                         .enumerate()
                         .filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]=="y"))
                         .map(|ia| ia.1)
                         .cloned()
                         .collect::<Vec<String>>();
 
-                        result_template.all_open=poll.questions.iter()
+                        let all_open=poll.questions.iter()
                         .enumerate()
                         .filter(|ia| !poll.answers.iter().all(|a| a.1[ia.0]=="y"))
                         .filter(|ia| poll.answers.iter().all(|a| a.1[ia.0]!="n"))
@@ -291,13 +402,20 @@ pub fn get_poll_results(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPo
                         .cloned()
                         .collect::<Vec<String>>();
 
-                        Json(result_template)
-                    }
+                        (all_yay, all_open)
+                    };
+
+                    GetPollOutput::json_answers(title, user_names, all_yay, all_open)
                 }
             },
         },
     }
 }
+
+
+
+
+
 
 // // Black box only
 // #[cfg(test)]

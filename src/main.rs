@@ -37,6 +37,6 @@ fn main() {
     rocket::ignite()
     .manage(Mutex::new(data))
     .mount("/", routes![index, icon, files])
-    .mount("/api/", routes![start_poll, get_poll, fill_poll, fill_free_entry_poll, get_poll_results])
+    .mount("/api/", routes![start_poll, get_poll, fill_poll, fill_free_entry_poll])
     .launch();
 }
