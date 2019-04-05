@@ -18,6 +18,8 @@ Web application for finding common interests in "sport".
 
  - See if DOS attacks can be mitigated somehow. Right now it should be easy for an attacker to arbitrarily enlarge the `polls` hash map.
 
+ - API changed, so readme needs to change too.
+
 # Frontend Design
 
     - Navbar has 4 options:
