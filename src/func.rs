@@ -2,20 +2,20 @@ use std::sync::Mutex;
 #[cfg(test)]
 use rocket;
 use rocket::State;
-use rocket_contrib::Json;
+use rocket_contrib::json::Json;
 use data::{Data, Poll};
 use characters::*;
 
 
 #[derive(Deserialize)]
-struct StartPollInput {
+pub struct StartPollInput {
     number: isize,
     title: String,
     questions: String,
 }
 
 #[derive(Serialize)]
-struct StartPollOutput {
+pub struct StartPollOutput {
     poll_id: String,
     error: &'static str,
 }
@@ -36,8 +36,8 @@ impl StartPollOutput {
     }
 }
 
-#[post("/start_poll", format = "application/json", data = "<start_poll_input>")]
-fn start_poll(data: State<Mutex<Data>>, start_poll_input: Json<StartPollInput>) -> Json<StartPollOutput>{
+#[put("/start_poll", format = "application/json", data = "<start_poll_input>")]
+pub fn start_poll(data: State<Mutex<Data>>, start_poll_input: Json<StartPollInput>) -> Json<StartPollOutput>{
     let StartPollInput{number, mut title, questions}=start_poll_input.into_inner();
     title.make_ascii_lowercase();
     let free_answers=questions.len()==0;
@@ -79,7 +79,7 @@ fn start_poll(data: State<Mutex<Data>>, start_poll_input: Json<StartPollInput>) 
 }
 
 #[derive(Serialize)]
-struct GetPollOutput {
+pub struct GetPollOutput {
     title: String,
     questions: Vec<String>,
     polls_filled: usize,
@@ -100,7 +100,7 @@ impl GetPollOutput {
 }
 
 #[get("/get_poll/<poll_id>")]
-fn get_poll(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollOutput>{
+pub fn get_poll(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollOutput>{
     match data.lock() {
         Err(_) => GetPollOutput::err("Server error."),
         Ok(data) => match data.get_poll(&poll_id) {
@@ -121,14 +121,14 @@ fn get_poll(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollOutput>{
 }
 
 #[derive(Deserialize)]
-struct FillPollInput {
+pub struct FillPollInput {
     user_name: String,
     poll_id: String,
     answers: Vec<isize>,
 }
 
 #[post("/fill_poll", format = "application/json", data = "<fill_poll_input>")]
-fn fill_poll(data: State<Mutex<Data>>, fill_poll_input: Json<FillPollInput>) -> Json<&str>{
+pub fn fill_poll(data: State<Mutex<Data>>, fill_poll_input: Json<FillPollInput>) -> Json<&str>{
     let mut fill_poll_input=fill_poll_input.into_inner();
     fill_poll_input.user_name.make_ascii_lowercase();
     let FillPollInput{user_name, poll_id, answers}=fill_poll_input;
@@ -170,14 +170,14 @@ fn fill_poll(data: State<Mutex<Data>>, fill_poll_input: Json<FillPollInput>) -> 
 }
 
 #[derive(Deserialize)]
-struct FillFreeEntryPollInput {
+pub struct FillFreeEntryPollInput {
     user_name: String,
     poll_id: String,
     answers: String,
 }
 
 #[post("/fill_free_entry_poll", format = "application/json", data = "<fill_free_entry_poll_input>")]
-fn fill_free_entry_poll(data: State<Mutex<Data>>, fill_free_entry_poll_input: Json<FillFreeEntryPollInput>) -> Json<&str>{
+pub fn fill_free_entry_poll(data: State<Mutex<Data>>, fill_free_entry_poll_input: Json<FillFreeEntryPollInput>) -> Json<&str>{
     let mut fill_free_entry_poll_input=fill_free_entry_poll_input.into_inner();
     fill_free_entry_poll_input.user_name.make_ascii_lowercase();
     fill_free_entry_poll_input.poll_id.make_ascii_lowercase();
@@ -227,7 +227,7 @@ fn fill_free_entry_poll(data: State<Mutex<Data>>, fill_free_entry_poll_input: Js
 }
 
 #[derive(Serialize)]
-struct GetPollResultsOutput {
+pub struct GetPollResultsOutput {
     title: String,
     user_names: Vec<String>,
     all_yay: Vec<String>,
@@ -248,7 +248,7 @@ impl GetPollResultsOutput {
 }
 
 #[get("/get_poll_results/<poll_id>")]
-fn get_poll_results(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollResultsOutput>{
+pub fn get_poll_results(poll_id: String, data: State<Mutex<Data>>) -> Json<GetPollResultsOutput>{
     let mut result_template=GetPollResultsOutput{title: "".into(), user_names: vec![], all_yay: vec![], all_open: vec![], error: String::new()};
     match data.lock() {
         Err(_) => GetPollResultsOutput::err("Server error."),
