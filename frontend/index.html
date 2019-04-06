@@ -4518,15 +4518,33 @@ function _Url_percentDecode(string)
 var author$project$Main$UrlRequest = function (a) {
 	return {$: 'UrlRequest', a: a};
 };
-var author$project$Main$Model = F8(
-	function (key, url, route, error, poll_title, poll_number, poll_type_is_free, poll_questions) {
-		return {error: error, key: key, poll_number: poll_number, poll_questions: poll_questions, poll_title: poll_title, poll_type_is_free: poll_type_is_free, route: route, url: url};
-	});
+var author$project$Main$Model = function (key) {
+	return function (url) {
+		return function (route) {
+			return function (error) {
+				return function (poll_title) {
+					return function (poll_number) {
+						return function (poll_type_is_free) {
+							return function (poll_questions_field) {
+								return function (poll_questions) {
+									return function (poll_answers) {
+										return {error: error, key: key, poll_answers: poll_answers, poll_number: poll_number, poll_questions: poll_questions, poll_questions_field: poll_questions_field, poll_title: poll_title, poll_type_is_free: poll_type_is_free, route: route, url: url};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
 var author$project$Main$RouteError = {$: 'RouteError'};
 var elm$core$Basics$False = {$: 'False'};
+var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var author$project$Main$make_default_model = F2(
 	function (key, url) {
-		return A8(author$project$Main$Model, key, url, author$project$Main$RouteError, '', '', 0, false, '');
+		return author$project$Main$Model(key)(url)(author$project$Main$RouteError)('')('')(0)(false)('')(elm$core$Maybe$Nothing)(elm$core$Maybe$Nothing);
 	});
 var elm$browser$Browser$External = function (a) {
 	return {$: 'External', a: a};
@@ -4549,7 +4567,6 @@ var elm$core$Basics$never = function (_n0) {
 var elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
-var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
 	if (result.$ === 'Ok') {
@@ -5557,13 +5574,21 @@ var author$project$Main$saturate_range = F3(
 	function (min, max, num) {
 		return (_Utils_cmp(num, min) < 0) ? min : ((_Utils_cmp(num, max) > 0) ? max : num);
 	});
-var author$project$Main$StartPollOutput = F2(
-	function (poll_id, error) {
-		return {error: error, poll_id: poll_id};
+var author$project$Main$GetPollOutput = F3(
+	function (questions, answers, error) {
+		return {answers: answers, error: error, questions: questions};
 	});
-var author$project$Main$StartPollResult = function (a) {
-	return {$: 'StartPollResult', a: a};
+var author$project$Main$GetPollResult = function (a) {
+	return {$: 'GetPollResult', a: a};
 };
+var author$project$Main$PollAnswers = F4(
+	function (title, user_names, all_yay, all_open) {
+		return {all_open: all_open, all_yay: all_yay, title: title, user_names: user_names};
+	});
+var author$project$Main$PollQuestions = F4(
+	function (title, questions, polls_filled, polls_number) {
+		return {polls_filled: polls_filled, polls_number: polls_number, questions: questions, title: title};
+	});
 var elm$core$Result$mapError = F2(
 	function (f, result) {
 		if (result.$ === 'Ok') {
@@ -6189,12 +6214,7 @@ var elm$http$Http$expectJson = F2(
 						A2(elm$json$Json$Decode$decodeString, decoder, string));
 				}));
 	});
-var elm$http$Http$jsonBody = function (value) {
-	return A2(
-		_Http_pair,
-		'application/json',
-		A2(elm$json$Json$Encode$encode, 0, value));
-};
+var elm$http$Http$emptyBody = _Http_emptyBody;
 var elm$http$Http$Request = function (a) {
 	return {$: 'Request', a: a};
 };
@@ -6363,12 +6383,84 @@ var elm$http$Http$request = function (r) {
 		elm$http$Http$Request(
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
-var elm$http$Http$post = function (r) {
+var elm$http$Http$get = function (r) {
 	return elm$http$Http$request(
-		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
+		{body: elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
 };
+var elm$json$Json$Decode$array = _Json_decodeArray;
 var elm$json$Json$Decode$field = _Json_decodeField;
+var elm$json$Json$Decode$int = _Json_decodeInt;
+var elm$json$Json$Decode$map3 = _Json_map3;
+var elm$json$Json$Decode$map4 = _Json_map4;
+var elm$json$Json$Decode$null = _Json_decodeNull;
+var elm$json$Json$Decode$oneOf = _Json_oneOf;
+var elm$json$Json$Decode$nullable = function (decoder) {
+	return elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				elm$json$Json$Decode$null(elm$core$Maybe$Nothing),
+				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder)
+			]));
+};
 var elm$json$Json$Decode$string = _Json_decodeString;
+var author$project$Main$send_get_poll = function (poll_id) {
+	var questions_decoder = A5(
+		elm$json$Json$Decode$map4,
+		author$project$Main$PollQuestions,
+		A2(elm$json$Json$Decode$field, 'title', elm$json$Json$Decode$string),
+		A2(
+			elm$json$Json$Decode$field,
+			'questions',
+			elm$json$Json$Decode$array(elm$json$Json$Decode$string)),
+		A2(elm$json$Json$Decode$field, 'polls_filled', elm$json$Json$Decode$int),
+		A2(elm$json$Json$Decode$field, 'polls_number', elm$json$Json$Decode$int));
+	var answers_decoder = A5(
+		elm$json$Json$Decode$map4,
+		author$project$Main$PollAnswers,
+		A2(elm$json$Json$Decode$field, 'title', elm$json$Json$Decode$string),
+		A2(
+			elm$json$Json$Decode$field,
+			'user_names',
+			elm$json$Json$Decode$array(elm$json$Json$Decode$string)),
+		A2(
+			elm$json$Json$Decode$field,
+			'all_yay',
+			elm$json$Json$Decode$array(elm$json$Json$Decode$string)),
+		A2(
+			elm$json$Json$Decode$field,
+			'all_open',
+			elm$json$Json$Decode$array(elm$json$Json$Decode$string)));
+	var poll_output_decoder = A4(
+		elm$json$Json$Decode$map3,
+		author$project$Main$GetPollOutput,
+		A2(
+			elm$json$Json$Decode$field,
+			'questions',
+			elm$json$Json$Decode$nullable(questions_decoder)),
+		A2(
+			elm$json$Json$Decode$field,
+			'answers',
+			elm$json$Json$Decode$nullable(answers_decoder)),
+		A2(elm$json$Json$Decode$field, 'error', elm$json$Json$Decode$string));
+	return elm$http$Http$get(
+		{
+			expect: A2(elm$http$Http$expectJson, author$project$Main$GetPollResult, poll_output_decoder),
+			url: '/api/poll/' + poll_id
+		});
+};
+var author$project$Main$PutPollResult = function (a) {
+	return {$: 'PutPollResult', a: a};
+};
+var author$project$Main$StartPollOutput = F2(
+	function (poll_id, error) {
+		return {error: error, poll_id: poll_id};
+	});
+var elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2(elm$json$Json$Encode$encode, 0, value));
+};
 var elm$json$Json$Encode$int = _Json_wrap;
 var elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
@@ -6384,8 +6476,8 @@ var elm$json$Json$Encode$object = function (pairs) {
 			pairs));
 };
 var elm$json$Json$Encode$string = _Json_wrap;
-var author$project$Main$send_start_poll = function (model) {
-	var questions = model.poll_type_is_free ? '' : ((!elm$core$String$length(model.poll_questions)) ? 'a' : model.poll_questions);
+var author$project$Main$send_put_poll = function (model) {
+	var questions = model.poll_type_is_free ? '' : ((!elm$core$String$length(model.poll_questions_field)) ? 'a' : model.poll_questions_field);
 	var decoder = A3(
 		elm$json$Json$Decode$map2,
 		author$project$Main$StartPollOutput,
@@ -6405,11 +6497,15 @@ var author$project$Main$send_start_poll = function (model) {
 					'questions',
 					elm$json$Json$Encode$string(questions))
 				])));
-	return elm$http$Http$post(
+	return elm$http$Http$request(
 		{
 			body: body,
-			expect: A2(elm$http$Http$expectJson, author$project$Main$StartPollResult, decoder),
-			url: '/api/start_poll'
+			expect: A2(elm$http$Http$expectJson, author$project$Main$PutPollResult, decoder),
+			headers: _List_Nil,
+			method: 'PUT',
+			timeout: elm$core$Maybe$Nothing,
+			tracker: elm$core$Maybe$Nothing,
+			url: '/api/poll'
 		});
 };
 var elm$browser$Browser$Navigation$load = _Browser_load;
@@ -6566,7 +6662,7 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{poll_questions: questions}),
+						{poll_questions_field: questions}),
 					elm$core$Platform$Cmd$none);
 			case 'ClickedFree':
 				var free = msg.a;
@@ -6578,8 +6674,8 @@ var author$project$Main$update = F2(
 			case 'ClickedSubmitPoll':
 				return _Utils_Tuple2(
 					model,
-					author$project$Main$send_start_poll(model));
-			case 'StartPollResult':
+					author$project$Main$send_put_poll(model));
+			case 'PutPollResult':
 				if (msg.a.$ === 'Err') {
 					var err = msg.a.a;
 					return _Utils_Tuple2(
@@ -6598,6 +6694,32 @@ var author$project$Main$update = F2(
 						elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 						model,
 						A2(elm$browser$Browser$Navigation$pushUrl, model.key, '/elm_show_poll_link/' + start_poll_output.poll_id));
+				}
+			case 'GetPollResult':
+				if (msg.a.$ === 'Err') {
+					var err = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								error: author$project$Main$http_err_to_string(err)
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					var poll = msg.a.a;
+					return (poll.error !== '') ? _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{error: poll.error}),
+						elm$core$Platform$Cmd$none) : (((_Utils_eq(poll.questions, elm$core$Maybe$Nothing) && _Utils_eq(poll.answers, elm$core$Maybe$Nothing)) || ((!_Utils_eq(poll.questions, elm$core$Maybe$Nothing)) && (!_Utils_eq(poll.answers, elm$core$Maybe$Nothing)))) ? _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{error: 'Server did not send either questions or answers (it sent both or neither).'}),
+						elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{poll_answers: poll.answers, poll_questions: poll.questions}),
+						elm$core$Platform$Cmd$none));
 				}
 			case 'UrlRequest':
 				var url_request = msg.a;
@@ -6629,10 +6751,18 @@ var author$project$Main$update = F2(
 				}();
 				var route = _n3.a;
 				var error = _n3.b;
+				var command = function () {
+					if (route.$ === 'RoutePoll') {
+						var poll_id = route.a;
+						return author$project$Main$send_get_poll(poll_id);
+					} else {
+						return elm$core$Platform$Cmd$none;
+					}
+				}();
 				var new_model = _Utils_update(
 					default_model,
 					{error: error, route: route});
-				return _Utils_Tuple2(new_model, elm$core$Platform$Cmd$none);
+				return _Utils_Tuple2(new_model, command);
 			default:
 				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 		}
@@ -6929,7 +7059,7 @@ var author$project$Main$start_poll = function (model) {
 												A2(elm$html$Html$Attributes$style, 'margin-top', '.2cm'),
 												A2(elm$html$Html$Attributes$style, 'margin-bottom', '.2cm'),
 												elm$html$Html$Events$onInput(author$project$Main$UpdateQuestions),
-												elm$html$Html$Attributes$value(model.poll_questions)
+												elm$html$Html$Attributes$value(model.poll_questions_field)
 											]),
 										_List_Nil)
 									]))
@@ -7020,6 +7150,30 @@ var author$project$Main$view = function (model) {
 					case 'RouteShowPollLink':
 						var poll_id = _n0.a;
 						return A2(author$project$Main$show_link, model.url, poll_id);
+					case 'RoutePoll':
+						var poll_id = _n0.a;
+						var _n1 = _Utils_Tuple2(model.poll_questions, model.poll_answers);
+						_n1$2:
+						while (true) {
+							if (_n1.a.$ === 'Just') {
+								if (_n1.b.$ === 'Nothing') {
+									var questions = _n1.a.a;
+									var _n2 = _n1.b;
+									return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+								} else {
+									break _n1$2;
+								}
+							} else {
+								if (_n1.b.$ === 'Just') {
+									var _n3 = _n1.a;
+									var answers = _n1.b.a;
+									return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+								} else {
+									break _n1$2;
+								}
+							}
+						}
+						return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 					default:
 						return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 				}

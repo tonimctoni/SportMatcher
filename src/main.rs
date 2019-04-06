@@ -56,6 +56,6 @@ fn main() {
     .manage(Mutex::new(data))
     .mount("/", routes![index, icon, files])
     .mount("/", routes![index_elm_start_poll, index_elm_show_poll_link, index_elm_poll])
-    .mount("/api/", routes![start_poll, get_poll, fill_poll, fill_free_entry_poll])
+    .mount("/api/", routes![put_poll, get_poll, post_poll])
     .launch();
 }
