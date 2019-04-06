@@ -30,11 +30,14 @@ type alias Model =
   , poll_questions_field: String
   , poll_questions: Maybe PollQuestions
   , poll_answers: Maybe PollAnswers
+  , user_name: String
   , fixed_answers: Array.Array Int
+  , free_answers: String
+  , submitted_answers: Bool
   }
 
 make_default_model: Nav.Key -> Url.Url -> Model
-make_default_model key url = Model key url RouteError "" "" 0 False "" Nothing Nothing
+make_default_model key url = Model key url RouteError "" "" 0 False "" Nothing Nothing "" Array.empty "" False
 
 init: () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
@@ -114,6 +117,25 @@ send_get_poll poll_id =
     Http.get {url="/api/poll/"++poll_id, expect=Http.expectJson GetPollResult poll_output_decoder}
 
 
+--send_post_poll: String -> Model -> Cmd Msg
+--send_post_poll poll_id model=
+--  let
+--    user_name_encode = Encode.string model.user_name
+--    fixed_answers_encode=if Array.length model.fixed_answers==0 then Encode.null else Encode.array (Array.map Encode.int model.fixed_answers)
+--    free_answers_encode =if String.length model.free_answers==0 then Encode.null else Encode.string model.free_answers
+
+--    body =
+--      [ ("user_name", user_name_encode)
+--      , ("fixed_answers", fixed_answers_encode)
+--      , ("free_answers", free_answers_encode)
+--      ]
+--      |> Encode.object
+--      |> Http.jsonBody
+
+--    return_string_decoder = Decode.string
+--  in
+--    Http.post {url="/api/poll/"++poll_id, body=body, expect=Http.expectJson PostPollResult return_string_decoder}
+
 -- UPDATE
 
 type Msg
@@ -129,8 +151,11 @@ type Msg
   | PutPollResult (Result Http.Error StartPollOutput)
 -------- FILL POLL
   | GetPollResult (Result Http.Error GetPollOutput)
+  | UpdateUserName String
   | SetFixedAnswer Int Int
-
+  | UpdateFreeAnswers String
+  | ClickedSubmitAnswers
+  | PostPollResult (Result Http.Error String)
 
 saturate_range: Int -> Int -> Int -> Int
 saturate_range min max num=
@@ -176,11 +201,22 @@ update msg model =
     GetPollResult (Err err) ->
       ({model | error=http_err_to_string err}, Cmd.none)
     GetPollResult (Ok poll) ->
-      if poll.error/="" then ({model | error=poll.error}, Cmd.none)
-      else if (poll.questions==Nothing && poll.answers==Nothing) || (poll.questions/=Nothing && poll.answers/=Nothing) then ({model | error="Server did not send either questions or answers (it sent both or neither)."}, Cmd.none)
-      else ({model | poll_questions=poll.questions, poll_answers=poll.answers}, Cmd.none)
+      let
+        num_fixed_answers = Maybe.withDefault 0 (Maybe.map (\q->Array.length q.questions) poll.questions)
+        fixed_answers = Array.repeat num_fixed_answers 3
+        error = if poll.error/="" then poll.error
+                else if (poll.questions==Nothing && poll.answers==Nothing) || (poll.questions/=Nothing && poll.answers/=Nothing) then "Server did not send either questions or answers (it sent both or neither)."
+                else ""
+      in
+        if error/="" then ({model | error=error}, Cmd.none)
+        else ({model | poll_questions=poll.questions, poll_answers=poll.answers, fixed_answers=fixed_answers, free_answers=""}, Cmd.none)
+    UpdateUserName user_name ->
+      ({model | user_name=user_name}, Cmd.none)
     SetFixedAnswer index state ->
       ({model | fixed_answers=Array.set index state model.fixed_answers}, Cmd.none)
+    UpdateFreeAnswers free_answers ->
+      ({model | free_answers=free_answers}, Cmd.none)
+    --ClickedSubmitAnswers -> (model, send_post_poll model)
 
 ----------------------------
     UrlRequest url_request ->
@@ -270,8 +306,8 @@ button_row model index question =
   case Array.get index model.fixed_answers of
     Just state -> div [class "row"]
       [ div [class "col-md-4"]
-        [ p [style "font-size", "16px", style "margin-top", ".1cm"] [text (capitalize question)]
-        , div [class "btn-group", style [("margin-bottom", ".4cm")]]
+        [ p [style "font-size" "16px", style "margin-top" ".1cm"] [text (capitalize question)]
+        , div [class "btn-group", style "margin-bottom" ".4cm"]
           [ button [class "btn btn-primary", disabled (state==2), onClick (SetFixedAnswer index 2)] [text "Yay"]
           , button [class "btn btn-primary", disabled (state==1), onClick (SetFixedAnswer index 1)] [text "Open to"]
           , button [class "btn btn-primary", disabled (state==0), onClick (SetFixedAnswer index 0)] [text "Nope"]
@@ -280,41 +316,33 @@ button_row model index question =
       ]
     Nothing -> div [] []
 
-fill_poll: Model -> Html Msg
-fill_poll model =
+fill_poll: Model -> PollQuestions -> String -> Html Msg
+fill_poll model questions poll_id=
   div [class "container"]
   [ h1 [style "margin" ".2cm"] [text "Fill Survey"]
   , div [class "col-md-12", style "margin" ".2cm", style "padding" ".2cm", style "border" ".5px solid red", style "border-radius" "4px"] (
-    if model.poll_id=="" then
-      [ p [style "font-weight" "bold",  style "color" "red"] [text model.error]
-      ]
-    else if model.submitted then
-      [ p [style "font-weight" "bold", style "color" "green"]
-        [ text "This poll has been submitted successfully. To see the results, go to "
-        , a [href ("http://"++model.host++"/elm/see_poll?poll_id="++model.poll_id)] [text ("http://"++model.host++"/elm/see_poll?poll_id="++model.poll_id)]
-        ]
-      ]
-    else if model.filled_by_all then
-      [ p [style "font-weight" "bold", style "color" "green"]
-        [ text "This poll has been filled out by enough people already. To see the results, go to "
-        , a [href ("http://"++model.host++"/elm/see_poll?poll_id="++model.poll_id)] [text ("http://"++model.host++"/elm/see_poll?poll_id="++model.poll_id)]
-        ]
-      ]
-    else if Array.length model.gotten_questions==0 then
+    if model.submitted_answers then
+      []
+      --[ p [style "font-weight" "bold", style "color" "green"]
+      --  [ text "This poll has been submitted successfully. To see the results, go to "
+      --  , a [href ("http://"++model.host++"/elm/see_poll?poll_id="++model.poll_id)] [text ("http://"++model.host++"/elm/see_poll?poll_id="++model.poll_id)]
+      --  ]
+      --]
+    else if Array.length questions.questions==0 then
       [ div [] 
-        [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Polling "++(capitalize model.title))], p [] [text "(Free entry)"]]]
+        [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Survey Name: "++(capitalize questions.title))], p [] [text "(Free entry)"]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
         , div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style "margin-top" ".2cm", style "margin-bottom" ".2cm", onInput UpdateFreeAnswers, value model.free_answers] []]]
-        , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitFreeAnswers] [text "Submit"]]]
+        , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitAnswers] [text "Submit"]]]
         ]
       , div [] [if String.length model.error>0 then p [style "font-weight" "bold", style "color" "red"] [text model.error] else div [] []]
       ]
     else
       [ div []
-        [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Polling "++(capitalize model.title))]]]
+        [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Survey Name: "++(capitalize questions.title))]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
-        , div [] (Array.toList (Array.indexedMap (button_row model) model.gotten_questions))
-        , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitFixedAnswers] [text "Submit"]]]
+        , div [] (Array.toList (Array.indexedMap (button_row model) questions.questions))
+        , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitAnswers] [text "Submit"]]]
         ]
       , div [] [if String.length model.error>0 then p [style "font-weight" "bold",  style "color" "red"] [text model.error] else div [] []]
       ]
@@ -332,9 +360,9 @@ view model =
       RouteShowPollLink poll_id -> show_link model.url poll_id
       RoutePoll poll_id -> 
         case (model.poll_questions, model.poll_answers) of
-          (Just questions, Nothing) -> div [][]
+          (Just questions, Nothing) -> fill_poll model questions poll_id
           (Nothing, Just answers) -> div [][]
-          _ -> div [] []
-      RouteError -> div [] []
+          _ -> div [] [] -- error_page
+      RouteError -> div [] [] -- error_page
     ]
   }
