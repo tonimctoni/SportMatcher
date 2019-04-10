@@ -117,24 +117,24 @@ send_get_poll poll_id =
     Http.get {url="/api/poll/"++poll_id, expect=Http.expectJson GetPollResult poll_output_decoder}
 
 
---send_post_poll: String -> Model -> Cmd Msg
---send_post_poll poll_id model=
---  let
---    user_name_encode = Encode.string model.user_name
---    fixed_answers_encode=if Array.length model.fixed_answers==0 then Encode.null else Encode.array (Array.map Encode.int model.fixed_answers)
---    free_answers_encode =if String.length model.free_answers==0 then Encode.null else Encode.string model.free_answers
+send_post_poll: String -> Model -> Cmd Msg
+send_post_poll poll_id model=
+  let
+    user_name_encode = Encode.string model.user_name
+    fixed_answers_encode=if Array.length model.fixed_answers==0 then Encode.null else Encode.array Encode.int model.fixed_answers
+    free_answers_encode =if String.length model.free_answers==0 then Encode.null else Encode.string model.free_answers
 
---    body =
---      [ ("user_name", user_name_encode)
---      , ("fixed_answers", fixed_answers_encode)
---      , ("free_answers", free_answers_encode)
---      ]
---      |> Encode.object
---      |> Http.jsonBody
+    body =
+      [ ("user_name", user_name_encode)
+      , ("fixed_answers", fixed_answers_encode)
+      , ("free_answers", free_answers_encode)
+      ]
+      |> Encode.object
+      |> Http.jsonBody
 
---    return_string_decoder = Decode.string
---  in
---    Http.post {url="/api/poll/"++poll_id, body=body, expect=Http.expectJson PostPollResult return_string_decoder}
+    return_string_decoder = Decode.string
+  in
+    Http.post {url="/api/poll/"++poll_id, body=body, expect=Http.expectJson PostPollResult return_string_decoder}
 
 -- UPDATE
 
@@ -154,7 +154,7 @@ type Msg
   | UpdateUserName String
   | SetFixedAnswer Int Int
   | UpdateFreeAnswers String
-  | ClickedSubmitAnswers
+  | ClickedSubmitAnswers String
   | PostPollResult (Result Http.Error String)
 
 saturate_range: Int -> Int -> Int -> Int
@@ -190,7 +190,10 @@ update msg model =
     ClickedFree free ->
       ({model | poll_type_is_free=free}, Cmd.none)
     ClickedSubmitPoll ->
-      (model, send_put_poll model)
+      if String.length model.poll_title<3 then ({model | error="Title must be at least 3 characters long."}, Cmd.none)
+      else if model.poll_number<2 || model.poll_number>20 then ({model | error="#Responders must be between 2 and 20."}, Cmd.none)
+      else if model.poll_type_is_free==False && model.poll_questions_field=="" then ({model | error="Must specify questions for a fixed answer poll."}, Cmd.none)
+      else (model, send_put_poll model)
     PutPollResult (Err err) ->
       ({model | error=http_err_to_string err}, Cmd.none)
     PutPollResult (Ok start_poll_output) ->
@@ -216,7 +219,21 @@ update msg model =
       ({model | fixed_answers=Array.set index state model.fixed_answers}, Cmd.none)
     UpdateFreeAnswers free_answers ->
       ({model | free_answers=free_answers}, Cmd.none)
-    --ClickedSubmitAnswers -> (model, send_post_poll model)
+    ClickedSubmitAnswers poll_id ->
+      if model.user_name=="" then ({model | error="Must enter a user name."}, Cmd.none)
+      else
+        if Array.length model.fixed_answers/=0 then
+          if Array.foldr (\v b -> b || v==3) False model.fixed_answers then ({model | error="Must give an answer to all items."}, Cmd.none)
+          else (model, send_post_poll poll_id model)
+        else
+          if String.length model.free_answers==0 then ({model | error="Entry field must not be empty."}, Cmd.none)
+          else (model, send_post_poll poll_id model)
+    PostPollResult (Err err) ->
+      ({model | error=http_err_to_string err}, Cmd.none)
+    PostPollResult (Ok error) ->
+      ({model | submitted_answers=error=="", error=error}, Cmd.none)
+
+
 
 ----------------------------
     UrlRequest url_request ->
@@ -316,35 +333,36 @@ button_row model index question =
       ]
     Nothing -> div [] []
 
+
 fill_poll: Model -> PollQuestions -> String -> Html Msg
 fill_poll model questions poll_id=
   div [class "container"]
   [ h1 [style "margin" ".2cm"] [text "Fill Survey"]
+  , p [style "margin-left" ".2cm"] [text <| (String.fromInt questions.polls_filled)++" out of "++(String.fromInt questions.polls_number)++" users have already answered."]
   , div [class "col-md-12", style "margin" ".2cm", style "padding" ".2cm", style "border" ".5px solid red", style "border-radius" "4px"] (
     if model.submitted_answers then
-      []
-      --[ p [style "font-weight" "bold", style "color" "green"]
-      --  [ text "This poll has been submitted successfully. To see the results, go to "
-      --  , a [href ("http://"++model.host++"/elm/see_poll?poll_id="++model.poll_id)] [text ("http://"++model.host++"/elm/see_poll?poll_id="++model.poll_id)]
-      --  ]
-      --]
+      [ p [style "font-weight" "bold", style "color" "green"]
+          [ text ("This survey has been submitted successfully. The results can be seen as soon as "++(String.fromInt questions.polls_number)++" users have filled it too at")
+          , a [href (Url.toString model.url)] [text (Url.toString model.url)]
+          ]
+      ]
     else if Array.length questions.questions==0 then
       [ div [] 
         [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Survey Name: "++(capitalize questions.title))], p [] [text "(Free entry)"]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
         , div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style "margin-top" ".2cm", style "margin-bottom" ".2cm", onInput UpdateFreeAnswers, value model.free_answers] []]]
-        , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitAnswers] [text "Submit"]]]
+        , div [class "row"] [div [class "col-md-4"] [button [onClick (ClickedSubmitAnswers poll_id)] [text "Submit"]]]
         ]
-      , div [] [if String.length model.error>0 then p [style "font-weight" "bold", style "color" "red"] [text model.error] else div [] []]
+      , div [] [if String.length model.error>0 then p [style "font-weight" "bold", style "color" "red"] [text ("Error: "++model.error)] else div [] []]
       ]
     else
       [ div []
         [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Survey Name: "++(capitalize questions.title))]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
         , div [] (Array.toList (Array.indexedMap (button_row model) questions.questions))
-        , div [class "row"] [div [class "col-md-4"] [button [onClick ClickedSubmitAnswers] [text "Submit"]]]
+        , div [class "row"] [div [class "col-md-4"] [button [onClick (ClickedSubmitAnswers poll_id)] [text "Submit"]]]
         ]
-      , div [] [if String.length model.error>0 then p [style "font-weight" "bold",  style "color" "red"] [text model.error] else div [] []]
+      , div [] [if String.length model.error>0 then p [style "font-weight" "bold",  style "color" "red"] [text ("Error: "++model.error)] else div [] []]
       ]
     )
   ]

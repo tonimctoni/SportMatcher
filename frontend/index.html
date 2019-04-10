@@ -6493,20 +6493,55 @@ var author$project$Main$send_get_poll = function (poll_id) {
 			url: '/api/poll/' + poll_id
 		});
 };
-var author$project$Main$PutPollResult = function (a) {
-	return {$: 'PutPollResult', a: a};
+var author$project$Main$PostPollResult = function (a) {
+	return {$: 'PostPollResult', a: a};
 };
-var author$project$Main$StartPollOutput = F2(
-	function (poll_id, error) {
-		return {error: error, poll_id: poll_id};
-	});
+var elm$core$Array$length = function (_n0) {
+	var len = _n0.a;
+	return len;
+};
 var elm$http$Http$jsonBody = function (value) {
 	return A2(
 		_Http_pair,
 		'application/json',
 		A2(elm$json$Json$Encode$encode, 0, value));
 };
+var elm$http$Http$post = function (r) {
+	return elm$http$Http$request(
+		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
+};
+var elm$core$Elm$JsArray$foldl = _JsArray_foldl;
+var elm$core$Array$foldl = F3(
+	function (func, baseCase, _n0) {
+		var tree = _n0.c;
+		var tail = _n0.d;
+		var helper = F2(
+			function (node, acc) {
+				if (node.$ === 'SubTree') {
+					var subTree = node.a;
+					return A3(elm$core$Elm$JsArray$foldl, helper, acc, subTree);
+				} else {
+					var values = node.a;
+					return A3(elm$core$Elm$JsArray$foldl, func, acc, values);
+				}
+			});
+		return A3(
+			elm$core$Elm$JsArray$foldl,
+			func,
+			A3(elm$core$Elm$JsArray$foldl, helper, baseCase, tree),
+			tail);
+	});
+var elm$json$Json$Encode$array = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				elm$core$Array$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(_Utils_Tuple0),
+				entries));
+	});
 var elm$json$Json$Encode$int = _Json_wrap;
+var elm$json$Json$Encode$null = _Json_encodeNull;
 var elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -6521,6 +6556,34 @@ var elm$json$Json$Encode$object = function (pairs) {
 			pairs));
 };
 var elm$json$Json$Encode$string = _Json_wrap;
+var author$project$Main$send_post_poll = F2(
+	function (poll_id, model) {
+		var user_name_encode = elm$json$Json$Encode$string(model.user_name);
+		var return_string_decoder = elm$json$Json$Decode$string;
+		var free_answers_encode = (!elm$core$String$length(model.free_answers)) ? elm$json$Json$Encode$null : elm$json$Json$Encode$string(model.free_answers);
+		var fixed_answers_encode = (!elm$core$Array$length(model.fixed_answers)) ? elm$json$Json$Encode$null : A2(elm$json$Json$Encode$array, elm$json$Json$Encode$int, model.fixed_answers);
+		var body = elm$http$Http$jsonBody(
+			elm$json$Json$Encode$object(
+				_List_fromArray(
+					[
+						_Utils_Tuple2('user_name', user_name_encode),
+						_Utils_Tuple2('fixed_answers', fixed_answers_encode),
+						_Utils_Tuple2('free_answers', free_answers_encode)
+					])));
+		return elm$http$Http$post(
+			{
+				body: body,
+				expect: A2(elm$http$Http$expectJson, author$project$Main$PostPollResult, return_string_decoder),
+				url: '/api/poll/' + poll_id
+			});
+	});
+var author$project$Main$PutPollResult = function (a) {
+	return {$: 'PutPollResult', a: a};
+};
+var author$project$Main$StartPollOutput = F2(
+	function (poll_id, error) {
+		return {error: error, poll_id: poll_id};
+	});
 var author$project$Main$send_put_poll = function (model) {
 	var questions = model.poll_type_is_free ? '' : ((!elm$core$String$length(model.poll_questions_field)) ? 'a' : model.poll_questions_field);
 	var decoder = A3(
@@ -6555,10 +6618,6 @@ var author$project$Main$send_put_poll = function (model) {
 };
 var elm$browser$Browser$Navigation$load = _Browser_load;
 var elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
-var elm$core$Array$length = function (_n0) {
-	var len = _n0.a;
-	return len;
-};
 var elm$core$Array$repeat = F2(
 	function (n, e) {
 		return A2(
@@ -6801,9 +6860,21 @@ var author$project$Main$update = F2(
 						{poll_type_is_free: free}),
 					elm$core$Platform$Cmd$none);
 			case 'ClickedSubmitPoll':
-				return _Utils_Tuple2(
+				return (elm$core$String$length(model.poll_title) < 3) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{error: 'Title must be at least 3 characters long.'}),
+					elm$core$Platform$Cmd$none) : (((model.poll_number < 2) || (model.poll_number > 20)) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{error: '#Responders must be between 2 and 20.'}),
+					elm$core$Platform$Cmd$none) : (((!model.poll_type_is_free) && (model.poll_questions_field === '')) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{error: 'Must specify questions for a fixed answer poll.'}),
+					elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					model,
-					author$project$Main$send_put_poll(model));
+					author$project$Main$send_put_poll(model))));
 			case 'PutPollResult':
 				if (msg.a.$ === 'Err') {
 					var err = msg.a.a;
@@ -6881,6 +6952,50 @@ var author$project$Main$update = F2(
 						model,
 						{free_answers: free_answers}),
 					elm$core$Platform$Cmd$none);
+			case 'ClickedSubmitAnswers':
+				var poll_id = msg.a;
+				return (model.user_name === '') ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{error: 'Must enter a user name.'}),
+					elm$core$Platform$Cmd$none) : (elm$core$Array$length(model.fixed_answers) ? (A3(
+					elm$core$Array$foldr,
+					F2(
+						function (v, b) {
+							return b || (v === 3);
+						}),
+					false,
+					model.fixed_answers) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{error: 'Must give an answer to all items.'}),
+					elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+					model,
+					A2(author$project$Main$send_post_poll, poll_id, model))) : ((!elm$core$String$length(model.free_answers)) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{error: 'Entry field must not be empty.'}),
+					elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+					model,
+					A2(author$project$Main$send_post_poll, poll_id, model))));
+			case 'PostPollResult':
+				if (msg.a.$ === 'Err') {
+					var err = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								error: author$project$Main$http_err_to_string(err)
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					var error = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{error: error, submitted_answers: error === ''}),
+						elm$core$Platform$Cmd$none);
+				}
 			case 'UrlRequest':
 				var url_request = msg.a;
 				if (url_request.$ === 'Internal') {
@@ -6927,7 +7042,9 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 		}
 	});
-var author$project$Main$ClickedSubmitAnswers = {$: 'ClickedSubmitAnswers'};
+var author$project$Main$ClickedSubmitAnswers = function (a) {
+	return {$: 'ClickedSubmitAnswers', a: a};
+};
 var author$project$Main$UpdateFreeAnswers = function (a) {
 	return {$: 'UpdateFreeAnswers', a: a};
 };
@@ -7107,7 +7224,6 @@ var author$project$Main$button_row = F3(
 			return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 		}
 	});
-var elm$core$Elm$JsArray$foldl = _JsArray_foldl;
 var elm$core$Elm$JsArray$indexedMap = _JsArray_indexedMap;
 var elm$core$Array$indexedMap = F2(
 	function (func, _n0) {
@@ -7145,9 +7261,16 @@ var elm$core$Array$indexedMap = F2(
 			true,
 			A3(elm$core$Elm$JsArray$foldl, helper, initialBuilder, tree));
 	});
+var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$html$Html$input = _VirtualDom_node('input');
 var elm$html$Html$textarea = _VirtualDom_node('textarea');
+var elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
 var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
 var elm$html$Html$Attributes$rows = function (n) {
 	return A2(
@@ -7209,6 +7332,17 @@ var author$project$Main$fill_poll = F3(
 							elm$html$Html$text('Fill Survey')
 						])),
 					A2(
+					elm$html$Html$p,
+					_List_fromArray(
+						[
+							A2(elm$html$Html$Attributes$style, 'margin-left', '.2cm')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(
+							elm$core$String$fromInt(questions.polls_filled) + (' out of ' + (elm$core$String$fromInt(questions.polls_number) + ' users have already answered.')))
+						])),
+					A2(
 					elm$html$Html$div,
 					_List_fromArray(
 						[
@@ -7218,7 +7352,33 @@ var author$project$Main$fill_poll = F3(
 							A2(elm$html$Html$Attributes$style, 'border', '.5px solid red'),
 							A2(elm$html$Html$Attributes$style, 'border-radius', '4px')
 						]),
-					model.submitted_answers ? _List_Nil : ((!elm$core$Array$length(questions.questions)) ? _List_fromArray(
+					model.submitted_answers ? _List_fromArray(
+						[
+							A2(
+							elm$html$Html$p,
+							_List_fromArray(
+								[
+									A2(elm$html$Html$Attributes$style, 'font-weight', 'bold'),
+									A2(elm$html$Html$Attributes$style, 'color', 'green')
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									'This survey has been submitted successfully. The results can be seen as soon as ' + (elm$core$String$fromInt(questions.polls_number) + ' users have filled it too at')),
+									A2(
+									elm$html$Html$a,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$href(
+											elm$url$Url$toString(model.url))
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text(
+											elm$url$Url$toString(model.url))
+										]))
+								]))
+						]) : ((!elm$core$Array$length(questions.questions)) ? _List_fromArray(
 						[
 							A2(
 							elm$html$Html$div,
@@ -7339,7 +7499,8 @@ var author$project$Main$fill_poll = F3(
 													elm$html$Html$button,
 													_List_fromArray(
 														[
-															elm$html$Html$Events$onClick(author$project$Main$ClickedSubmitAnswers)
+															elm$html$Html$Events$onClick(
+															author$project$Main$ClickedSubmitAnswers(poll_id))
 														]),
 													_List_fromArray(
 														[
@@ -7362,7 +7523,7 @@ var author$project$Main$fill_poll = F3(
 										]),
 									_List_fromArray(
 										[
-											elm$html$Html$text(model.error)
+											elm$html$Html$text('Error: ' + model.error)
 										])) : A2(elm$html$Html$div, _List_Nil, _List_Nil)
 								]))
 						]) : _List_fromArray(
@@ -7458,7 +7619,8 @@ var author$project$Main$fill_poll = F3(
 													elm$html$Html$button,
 													_List_fromArray(
 														[
-															elm$html$Html$Events$onClick(author$project$Main$ClickedSubmitAnswers)
+															elm$html$Html$Events$onClick(
+															author$project$Main$ClickedSubmitAnswers(poll_id))
 														]),
 													_List_fromArray(
 														[
@@ -7481,19 +7643,12 @@ var author$project$Main$fill_poll = F3(
 										]),
 									_List_fromArray(
 										[
-											elm$html$Html$text(model.error)
+											elm$html$Html$text('Error: ' + model.error)
 										])) : A2(elm$html$Html$div, _List_Nil, _List_Nil)
 								]))
 						])))
 				]));
 	});
-var elm$html$Html$a = _VirtualDom_node('a');
-var elm$html$Html$Attributes$href = function (url) {
-	return A2(
-		elm$html$Html$Attributes$stringProperty,
-		'href',
-		_VirtualDom_noJavaScriptUri(url));
-};
 var author$project$Main$show_link = F2(
 	function (url, poll_id) {
 		var link_url = _Utils_update(
