@@ -7364,7 +7364,7 @@ var author$project$Main$fill_poll = F3(
 							_List_fromArray(
 								[
 									elm$html$Html$text(
-									'This survey has been submitted successfully. The results can be seen as soon as ' + (elm$core$String$fromInt(questions.polls_number) + ' users have filled it too at')),
+									'This survey has been submitted successfully. The results can be seen as soon as ' + (elm$core$String$fromInt(questions.polls_number) + ' users have filled it at ')),
 									A2(
 									elm$html$Html$a,
 									_List_fromArray(
@@ -7649,6 +7649,249 @@ var author$project$Main$fill_poll = F3(
 						])))
 				]));
 	});
+var elm$core$Elm$JsArray$map = _JsArray_map;
+var elm$core$Array$map = F2(
+	function (func, _n0) {
+		var len = _n0.a;
+		var startShift = _n0.b;
+		var tree = _n0.c;
+		var tail = _n0.d;
+		var helper = function (node) {
+			if (node.$ === 'SubTree') {
+				var subTree = node.a;
+				return elm$core$Array$SubTree(
+					A2(elm$core$Elm$JsArray$map, helper, subTree));
+			} else {
+				var values = node.a;
+				return elm$core$Array$Leaf(
+					A2(elm$core$Elm$JsArray$map, func, values));
+			}
+		};
+		return A4(
+			elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			A2(elm$core$Elm$JsArray$map, helper, tree),
+			A2(elm$core$Elm$JsArray$map, func, tail));
+	});
+var author$project$Main$show_list = F2(
+	function (name, list) {
+		return (elm$core$Array$length(list) > 0) ? A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2(elm$html$Html$Attributes$style, 'margin', '1cm')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('row')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('col-md-6'),
+									A2(elm$html$Html$Attributes$style, 'font-size', '20px'),
+									A2(elm$html$Html$Attributes$style, 'font-weight', 'bold'),
+									A2(elm$html$Html$Attributes$style, 'color', '#AAAAAA')
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(name)
+								]))
+						])),
+					A2(
+					elm$html$Html$div,
+					_List_Nil,
+					elm$core$Array$toList(
+						A2(
+							elm$core$Array$map,
+							function (x) {
+								return A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('row')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$div,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$class('col-md-4'),
+													A2(elm$html$Html$Attributes$style, 'color', '#AAAAAA')
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text(
+													author$project$Main$capitalize(x))
+												]))
+										]));
+							},
+							list)))
+				])) : A2(elm$html$Html$div, _List_Nil, _List_Nil);
+	});
+var author$project$Main$see_poll = F2(
+	function (model, answers) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('container')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$h1,
+					_List_fromArray(
+						[
+							A2(elm$html$Html$Attributes$style, 'margin', '.2cm')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('See Survey')
+						])),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('col-md-12'),
+							A2(elm$html$Html$Attributes$style, 'margin', '.2cm'),
+							A2(elm$html$Html$Attributes$style, 'padding', '.2cm'),
+							A2(elm$html$Html$Attributes$style, 'border', '.5px solid red'),
+							A2(elm$html$Html$Attributes$style, 'border-radius', '4px')
+						]),
+					(model.error !== '') ? _List_fromArray(
+						[
+							A2(
+							elm$html$Html$p,
+							_List_fromArray(
+								[
+									A2(elm$html$Html$Attributes$style, 'font-weight', 'bold'),
+									A2(elm$html$Html$Attributes$style, 'color', 'red')
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text('Error: ' + model.error)
+								]))
+						]) : _List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('row')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('col-md-4')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$p,
+											_List_fromArray(
+												[
+													A2(elm$html$Html$Attributes$style, 'font-weight', 'bold'),
+													A2(elm$html$Html$Attributes$style, 'font-size', '20px'),
+													A2(elm$html$Html$Attributes$style, 'color', '#AAAAAA')
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text(
+													'Survey ' + author$project$Main$capitalize(answers.title))
+												]))
+										]))
+								])),
+							A2(author$project$Main$show_list, 'Surveyed', answers.user_names),
+							A2(author$project$Main$show_list, 'Everyone says yay to:', answers.all_yay),
+							A2(author$project$Main$show_list, 'Everyone is at least open to trying: ', answers.all_open),
+							((!elm$core$Array$length(answers.all_yay)) && (!elm$core$Array$length(answers.all_open))) ? A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text('There are no categories all surveyed are at least open to.')
+								])) : A2(elm$html$Html$div, _List_Nil, _List_Nil)
+						]))
+				]));
+	});
+var author$project$Main$show_error = function (error) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('container')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$h1,
+				_List_fromArray(
+					[
+						A2(elm$html$Html$Attributes$style, 'margin', '.2cm')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Error Page')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('col-md-12'),
+						A2(elm$html$Html$Attributes$style, 'margin', '.2cm'),
+						A2(elm$html$Html$Attributes$style, 'padding', '.2cm'),
+						A2(elm$html$Html$Attributes$style, 'border', '.5px solid red'),
+						A2(elm$html$Html$Attributes$style, 'border-radius', '4px')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$p,
+						_List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'color', '#AAAAAA')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('Welcome to the error page')
+							])),
+						A2(
+						elm$html$Html$p,
+						_List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'font-weight', 'bold'),
+								A2(elm$html$Html$Attributes$style, 'color', 'red')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('Error: ' + error)
+							])),
+						A2(
+						elm$html$Html$a,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$href('/elm_start_poll')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('Click here to go to create survey page.')
+							]))
+					]))
+			]));
+};
 var author$project$Main$show_link = F2(
 	function (url, poll_id) {
 		var link_url = _Utils_update(
@@ -7657,19 +7900,55 @@ var author$project$Main$show_link = F2(
 		var link_string = elm$url$Url$toString(link_url);
 		return A2(
 			elm$html$Html$div,
-			_List_Nil,
 			_List_fromArray(
 				[
-					elm$html$Html$text('The poll can be found at:'),
+					elm$html$Html$Attributes$class('container')
+				]),
+			_List_fromArray(
+				[
 					A2(
-					elm$html$Html$a,
+					elm$html$Html$h1,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$href(link_string)
+							A2(elm$html$Html$Attributes$style, 'margin', '.2cm')
 						]),
 					_List_fromArray(
 						[
-							elm$html$Html$text(link_string)
+							elm$html$Html$text('Survey Started')
+						])),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('col-md-12'),
+							A2(elm$html$Html$Attributes$style, 'margin', '.2cm'),
+							A2(elm$html$Html$Attributes$style, 'padding', '.2cm'),
+							A2(elm$html$Html$Attributes$style, 'border', '.5px solid red'),
+							A2(elm$html$Html$Attributes$style, 'border-radius', '4px')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$p,
+							_List_fromArray(
+								[
+									A2(elm$html$Html$Attributes$style, 'font-weight', 'bold'),
+									A2(elm$html$Html$Attributes$style, 'color', 'green')
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text('Survey can now be filled at: ')
+								])),
+							A2(
+							elm$html$Html$a,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$href(link_string)
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(link_string)
+								]))
 						]))
 				]));
 	});
@@ -7958,15 +8237,21 @@ var author$project$Main$view = function (model) {
 								if (_n1.b.$ === 'Just') {
 									var _n3 = _n1.a;
 									var answers = _n1.b.a;
-									return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+									return A2(author$project$Main$see_poll, model, answers);
 								} else {
 									break _n1$2;
 								}
 							}
 						}
-						return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+						return (model.error === '') ? A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text('Loading ...')
+								])) : author$project$Main$show_error(model.error);
 					default:
-						return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+						return author$project$Main$show_error('Route error.');
 				}
 			}()
 			]),

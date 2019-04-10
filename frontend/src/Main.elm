@@ -18,7 +18,6 @@ main =
 
 -- MODEL
 
-
 type alias Model =
   { key: Nav.Key
   , url: Url.Url
@@ -273,14 +272,6 @@ route_parser =
 
 -- VIEW
 
-route_to_string: Route -> String
-route_to_string route =
-  case route of
-    RouteError -> "RouteError"
-    RouteStartPoll -> "RouteStartPoll"
-    RouteShowPollLink s-> "RouteShowPollLink" ++ " " ++ s
-    RoutePoll s-> "RoutePoll" ++ " " ++ s
-
 
 show_link: Url.Url -> String -> Html Msg
 show_link url poll_id=
@@ -288,9 +279,12 @@ show_link url poll_id=
     link_url = {url | path=("/elm_poll/"++poll_id), query=Nothing, fragment=Nothing}
     link_string = Url.toString link_url
   in
-    div []
-    [ text "The poll can be found at:"
-    , a [href link_string] [text link_string]
+    div [class "container"]
+    [ h1 [style "margin" ".2cm"] [text "Survey Started"]
+    , div [class "col-md-12", style "margin" ".2cm", style "padding" ".2cm", style "border" ".5px solid red", style "border-radius" "4px"]
+      [ p [style "font-weight" "bold", style "color" "green"] [text "Survey can now be filled at: "]
+      , a [href link_string] [text link_string]
+      ]
     ]
 
 start_poll: Model -> Html Msg
@@ -342,7 +336,7 @@ fill_poll model questions poll_id=
   , div [class "col-md-12", style "margin" ".2cm", style "padding" ".2cm", style "border" ".5px solid red", style "border-radius" "4px"] (
     if model.submitted_answers then
       [ p [style "font-weight" "bold", style "color" "green"]
-          [ text ("This survey has been submitted successfully. The results can be seen as soon as "++(String.fromInt questions.polls_number)++" users have filled it too at")
+          [ text ("This survey has been submitted successfully. The results can be seen as soon as "++(String.fromInt questions.polls_number)++" users have filled it at ")
           , a [href (Url.toString model.url)] [text (Url.toString model.url)]
           ]
       ]
@@ -367,6 +361,45 @@ fill_poll model questions poll_id=
     )
   ]
 
+show_list: String -> Array.Array String -> Html Msg
+show_list name list =
+  if Array.length list>0 then
+    div [style "margin" "1cm"]
+    [ div [class "row"] [div [class "col-md-6", style "font-size" "20px", style "font-weight" "bold", style "color" "#AAAAAA"] [text name]]
+    , div [] (Array.toList (Array.map (\x-> div [class "row"] [div [class "col-md-4", style "color" "#AAAAAA"] [text (capitalize x)]]) list))
+    ]
+  else
+    div [] []
+
+see_poll: Model -> PollAnswers -> Html Msg
+see_poll model answers =
+  div [class "container"]
+  [ h1 [style "margin" ".2cm"] [text "See Survey"]
+  , div [class "col-md-12", style "margin" ".2cm", style "padding" ".2cm", style "border" ".5px solid red", style "border-radius" "4px"] (
+    if model.error/="" then
+      [ p [style "font-weight" "bold",  style "color" "red"] [text ("Error: "++model.error)]
+      ]
+    else
+      [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px", style "color" "#AAAAAA"] [text ("Survey "++(capitalize answers.title))]]]
+      , (show_list "Surveyed" answers.user_names)
+      , (show_list "Everyone says yay to:" answers.all_yay)
+      , (show_list "Everyone is at least open to trying: " answers.all_open)
+      , if Array.length answers.all_yay==0 && Array.length answers.all_open==0 then div [] [text "There are no categories all surveyed are at least open to."] else div [] []
+      ]
+    )
+  ]
+
+show_error: String -> Html Msg
+show_error error =
+  div [class "container"]
+  [ h1 [style "margin" ".2cm"] [text "Error Page"]
+  , div [class "col-md-12", style "margin" ".2cm", style "padding" ".2cm", style "border" ".5px solid red", style "border-radius" "4px"]
+    [ p [style "color" "#AAAAAA"] [text "Welcome to the error page"]
+    , p [style "font-weight" "bold",  style "color" "red"] [text ("Error: "++error)]
+    , a [href "/elm_start_poll"] [text "Click here to go to create survey page."]
+    ]
+  ]
+
 view: Model -> Browser.Document Msg
 view model =
   { title = "title"
@@ -379,8 +412,9 @@ view model =
       RoutePoll poll_id -> 
         case (model.poll_questions, model.poll_answers) of
           (Just questions, Nothing) -> fill_poll model questions poll_id
-          (Nothing, Just answers) -> div [][]
-          _ -> div [] [] -- error_page
-      RouteError -> div [] [] -- error_page
+          (Nothing, Just answers) -> see_poll model answers
+          _ -> if model.error=="" then div [] [text "Loading ..."]
+               else show_error model.error
+      RouteError -> show_error "Route error."
     ]
   }
