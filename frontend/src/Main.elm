@@ -138,8 +138,7 @@ send_post_poll poll_id model=
 -- UPDATE
 
 type Msg
-  = MsgInstance
-  | UrlRequest Browser.UrlRequest
+  = UrlRequest Browser.UrlRequest
   | UrlChange Url.Url
 -------- START POLL
   | UpdateTitle String
@@ -253,7 +252,6 @@ update msg model =
           _ -> Cmd.none
       in
         (new_model, command)
-    _ -> (model, Cmd.none)
 
 type Route
   = RouteError
@@ -317,7 +315,7 @@ button_row model index question =
   case Array.get index model.fixed_answers of
     Just state -> div [class "row"]
       [ div [class "col-md-4"]
-        [ p [style "font-size" "16px", style "margin-top" ".1cm"] [text (capitalize question)]
+        [ p [style "font-size" "16px", style "margin-top" ".1cm", style "color" "#AAAAAA"] [text (capitalize question)]
         , div [class "btn-group", style "margin-bottom" ".4cm"]
           [ button [class "btn btn-primary", disabled (state==2), onClick (SetFixedAnswer index 2)] [text "Yay"]
           , button [class "btn btn-primary", disabled (state==1), onClick (SetFixedAnswer index 1)] [text "Open to"]
@@ -342,7 +340,7 @@ fill_poll model questions poll_id=
       ]
     else if Array.length questions.questions==0 then
       [ div [] 
-        [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Survey Name: "++(capitalize questions.title))], p [] [text "(Free entry)"]]]
+        [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Survey Title: "++(capitalize questions.title))], p [] [text "(Free entry)"]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
         , div [class "row"] [div [class "col-md-4"] [textarea [rows 10, style "margin-top" ".2cm", style "margin-bottom" ".2cm", onInput UpdateFreeAnswers, value model.free_answers] []]]
         , div [class "row"] [div [class "col-md-4"] [button [onClick (ClickedSubmitAnswers poll_id)] [text "Submit"]]]
@@ -351,7 +349,7 @@ fill_poll model questions poll_id=
       ]
     else
       [ div []
-        [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Survey Name: "++(capitalize questions.title))]]]
+        [ div [class "row"] [div [class "col-md-4"] [p [style "font-weight" "bold", style "font-size" "20px"] [text ("Survey Title: "++(capitalize questions.title))]]]
         , div [class "row"] [div [class "col-md-4"] [input [type_ "text", placeholder "User Name", onInput UpdateUserName, value model.user_name] []]]
         , div [] (Array.toList (Array.indexedMap (button_row model) questions.questions))
         , div [class "row"] [div [class "col-md-4"] [button [onClick (ClickedSubmitAnswers poll_id)] [text "Submit"]]]

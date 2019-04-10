@@ -63,8 +63,8 @@ pub fn put_poll(data: State<Mutex<Data>>, start_poll_input: Json<StartPollInput>
         return StartPollOutput::err("There must be between 3 and 1000 unique questions.")
     }
 
-    if questions.iter().any(|q| (*q).len() < 3 || (*q).len() > 50 || !contains_only((*q).as_str(), LOWER_ALPHA_SPACE_CHARS)){
-        return StartPollOutput::err("The length of each question must be between 3 and 50, and only contain letters and spaces.")
+    if questions.iter().any(|q| (*q).len() < 3 || (*q).len() > 50 || !contains_only((*q).as_str(), LOWER_ALPHANUMERIC_SYMBOLS_CHARS)){
+        return StartPollOutput::err("The length of each question must be between 3 and 50, and only contain alphanumeric or these `!? ,;.:-_()[]{}&%$` characters.")
     }
 
     match data.lock() {

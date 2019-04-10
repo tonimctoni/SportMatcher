@@ -7012,7 +7012,7 @@ var author$project$Main$update = F2(
 						model,
 						elm$browser$Browser$Navigation$load(url));
 				}
-			case 'UrlChange':
+			default:
 				var url = msg.a;
 				var default_model = A2(author$project$Main$make_default_model, model.key, url);
 				var _n3 = function () {
@@ -7038,8 +7038,6 @@ var author$project$Main$update = F2(
 					default_model,
 					{error: error, route: route});
 				return _Utils_Tuple2(new_model, command);
-			default:
-				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 		}
 	});
 var author$project$Main$ClickedSubmitAnswers = function (a) {
@@ -7162,7 +7160,8 @@ var author$project$Main$button_row = F3(
 								_List_fromArray(
 									[
 										A2(elm$html$Html$Attributes$style, 'font-size', '16px'),
-										A2(elm$html$Html$Attributes$style, 'margin-top', '.1cm')
+										A2(elm$html$Html$Attributes$style, 'margin-top', '.1cm'),
+										A2(elm$html$Html$Attributes$style, 'color', '#AAAAAA')
 									]),
 								_List_fromArray(
 									[
@@ -7411,7 +7410,7 @@ var author$project$Main$fill_poll = F3(
 													_List_fromArray(
 														[
 															elm$html$Html$text(
-															'Survey Name: ' + author$project$Main$capitalize(questions.title))
+															'Survey Title: ' + author$project$Main$capitalize(questions.title))
 														])),
 													A2(
 													elm$html$Html$p,
@@ -7559,7 +7558,7 @@ var author$project$Main$fill_poll = F3(
 													_List_fromArray(
 														[
 															elm$html$Html$text(
-															'Survey Name: ' + author$project$Main$capitalize(questions.title))
+															'Survey Title: ' + author$project$Main$capitalize(questions.title))
 														]))
 												]))
 										])),
