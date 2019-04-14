@@ -3,6 +3,7 @@
 #[macro_use] extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use] extern crate serde_derive;
+#[cfg(test)] extern crate serde_json;
 
 
 extern crate rand;
@@ -13,9 +14,11 @@ use rocket::response::NamedFile;
 use rocket::http::RawStr;
 use rocket::response::Redirect;
 
+
 mod func;
 mod data;
 mod characters;
+#[cfg(test)] mod test;
 
 #[get("/")]
 fn index() -> Redirect {

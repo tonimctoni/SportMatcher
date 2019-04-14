@@ -289,7 +289,6 @@ pub fn post_poll(poll_id: String, data: State<Mutex<Data>>, fill_poll_input: Jso
 }
 
 
-
 // // Black box only
 // #[cfg(test)]
 // mod tests {
