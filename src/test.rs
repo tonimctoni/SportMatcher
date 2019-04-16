@@ -79,13 +79,22 @@ pub struct FillPollInput {
     free_answers: Option<String>,
 }
 
-fn post<T: AsRef<str>>(client: &Client, poll_id: T, poll: FillPollInput) -> (Status, String){
+fn post<T: AsRef<str>>(client: &Client, poll_id: T, input: FillPollInput) -> (Status, String){
     let mut response=client.post(format!("/api/poll/{}", poll_id.as_ref()))
     .header(ContentType::JSON)
     .body(json!(input).to_string())
     .dispatch();
 
-    ...
+    let status=response.status();
+    let output=if Status::Ok==status{
+        assert_eq!(response.content_type().expect("Expected content type"), ContentType::JSON);
+        let body=response.body_string().expect("Expected body string");
+        serde_json::from_str(body.as_str()).expect("Could not parse struct from body string")
+    } else{
+        String::new()
+    };
+
+    (status, output)
 }
 
 #[test]
@@ -103,7 +112,7 @@ fn api_put() {
         (20, "title", ""),
         (2, "abcdefghijklmnopqrstuvwxyzabcdef", ""),
         (2, "title[]{}(),.-;:_", ""),
-        (2, "title", "question1\nquestion2\nquestion3\n"),
+        (2, "title", "question1\nquestion2\nquestion3\n\n\n"),
         (2, "title", "[]{\n}(),\n.-;\n:_!"),
     ].into_iter()
     .map(|(n,t,q)| (n, String::from(*t), String::from(*q)))
@@ -153,7 +162,7 @@ fn api_get_post() {
     let client = Client::new(rocket).expect("valid rocket instance");
 
     // Get requests with invalid ids
-    let (status, output)=get(&client, "");
+    let (status, _)=get(&client, "");
     assert_ne!(status, Status::Ok);
 
     let (status, output)=get(&client, "ABCDEF");
@@ -163,6 +172,8 @@ fn api_get_post() {
     assert!(output.error!="");
 
     // Post requests with invalid ids
+    let (status, _)=post(&client, "", FillPollInput{user_name: String::from("name"), fixed_answers: None, free_answers: Some(String::from("abc\ndef\nhij\n"))});
+    assert_ne!(status, Status::Ok);
 
     // FREE POLL
     // start free poll
@@ -173,20 +184,55 @@ fn api_get_post() {
     let (status, output)=get(&client, &poll_id);
     assert_eq!(status, Status::Ok);
     assert!(output.answers.is_none());
-    assert!(output.error!="");
+    assert!(output.error=="");
     let questions=output.questions.expect("Expected questions");
     assert_eq!(questions.title, "title");
     assert_eq!(questions.questions, Vec::new() as Vec<String>);
     assert_eq!(questions.title, "title");
     assert_eq!(questions.polls_filled, 0);
-    assert_eq!(questions.polls_number, 0);
+    assert_eq!(questions.polls_number, 2);
 
-    // post invalid answers to free poll
-    // post first answer to free poll
-    // get free poll with one answer
-    // post second answer to free poll
-    // get fully answered free poll
+    let invalid_inputs=[
+        ("a", None, Some(String::from("abc\ndef\nhij\n"))),
+        ("namea", None, Some(String::from("abc\n\n"))),
+        ("nameb", None, Some(String::from("abc\ndef\nhij<script>\n"))),
+        ("namec", None, Some(String::from("abc\nabc\nabc\n"))),
+        ("named", Some(vec![1,2,3]), None),
+    ].iter().map(|(a,b,c)| FillPollInput{user_name: String::from(*a), fixed_answers: b.clone(), free_answers: c.clone()}).collect::<Vec<_>>();
 
+
+    for input in invalid_inputs{
+        let (status, error)=post(&client, &poll_id, input);
+        assert_eq!(status, Status::Ok);
+        assert!(error!="");
+    }
+
+
+    let (status, error)=post(&client, &poll_id, FillPollInput{user_name: String::from("Namee"), fixed_answers: None, free_answers: Some(String::from("abc\ndef\nhij\n"))});
+    assert_eq!(status, Status::Ok);
+    assert!(error=="");
+
+    let (status, error)=post(&client, &poll_id, FillPollInput{user_name: String::from("Namee"), fixed_answers: None, free_answers: Some(String::from("abc\ndef\nhij\n"))});
+    assert_eq!(status, Status::Ok);
+    assert!(error!="");
+
+    let (status, error)=post(&client, &poll_id, FillPollInput{user_name: String::from("namef"), fixed_answers: None, free_answers: Some(String::from("abc\n\n\nK LM\n"))});
+    assert_eq!(status, Status::Ok);
+    assert!(error=="");
+
+    let (status, error)=post(&client, &poll_id, FillPollInput{user_name: String::from("nameg"), fixed_answers: None, free_answers: Some(String::from("abc\ndef\nhij\n"))});
+    assert_eq!(status, Status::Ok);
+    assert!(error!="");
+
+    let (status, output)=get(&client, &poll_id);
+    assert_eq!(status, Status::Ok);
+    assert!(output.questions.is_none());
+    assert!(output.error=="");
+    let answers=output.answers.expect("Expected answers");
+    assert_eq!(answers.title, "title");
+    assert_eq!(answers.user_names, vec!["namee", "namef"]);
+    assert_eq!(answers.all_yay, vec!["abc"]);
+    assert_eq!(answers.all_open, vec![] as Vec<&str>);
 
     // FIXED POLL
 }
